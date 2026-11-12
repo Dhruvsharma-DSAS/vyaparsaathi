@@ -5,7 +5,7 @@ from pathlib import Path
 SCHEMES_FILE = Path(__file__).resolve().parents[1] / "data" / "mosje_schemes.json"
 
 
-def get_best_matching_scheme(project_cost: float, target_group: str = "General") -> dict:
+def get_best_matching_scheme(project_cost: float, target_group: str = "General", available_capital: float = 0.0) -> dict:
     with SCHEMES_FILE.open("r", encoding="utf-8") as schemes_file:
         schemes = json.load(schemes_file)
 
@@ -22,13 +22,15 @@ def get_best_matching_scheme(project_cost: float, target_group: str = "General")
         selected = specialized[0] if specialized else eligible[0]
 
     margin_amount = (project_cost * selected["promoter_margin_pct"]) / 100.0
-    loan_amount = project_cost - margin_amount
+    available_capital = max(0.0, float(available_capital or 0.0))
+    loan_amount = max(0.0, project_cost - available_capital)
+    beneficiary_margin = margin_amount if loan_amount > 0 else min(margin_amount, available_capital)
     repayment_months = selected["repayment_period_months"]
     monthly_rate = (selected["interest_rate_pa"] / 100.0) / 12.0
 
-    if monthly_rate > 0 and repayment_months > 0:
+    if loan_amount > 0 and monthly_rate > 0 and repayment_months > 0:
         emi = (loan_amount * monthly_rate * ((1 + monthly_rate) ** repayment_months)) / (((1 + monthly_rate) ** repayment_months) - 1)
-    elif repayment_months > 0:
+    elif loan_amount > 0 and repayment_months > 0:
         emi = loan_amount / repayment_months
     else:
         emi = 0.0
@@ -36,7 +38,7 @@ def get_best_matching_scheme(project_cost: float, target_group: str = "General")
     return {
         "scheme_id": selected["scheme_id"],
         "scheme_name": selected["scheme_name"],
-        "beneficiary_margin": round(margin_amount, 2),
+        "beneficiary_margin": round(beneficiary_margin, 2),
         "loan_amount": round(loan_amount, 2),
         "monthly_emi": round(emi, 2),
         "interest_rate": selected["interest_rate_pa"],
@@ -44,15 +46,17 @@ def get_best_matching_scheme(project_cost: float, target_group: str = "General")
         "moratorium_months": selected["moratorium_months"],
         "repayment_months": repayment_months,
         "target_group": selected["target_group"],
+        "loan_required": loan_amount > 0,
     }
 
 
-def calculate_mosje_micro_finance(total_project_cost: float, target_group: str = "General") -> dict:
-    scheme = get_best_matching_scheme(total_project_cost, target_group)
+def calculate_mosje_micro_finance(total_project_cost: float, target_group: str = "General", available_capital: float = 0.0) -> dict:
+    scheme = get_best_matching_scheme(total_project_cost, target_group, available_capital)
     return {
         "total_project_cost": total_project_cost,
         "beneficiary_margin": scheme["beneficiary_margin"],
         "loan_amount": scheme["loan_amount"],
+        "loan_required": scheme["loan_required"],
         "annual_interest_rate": f'{scheme["interest_rate"]}%',
         "moratorium_months": scheme["moratorium_months"],
         "repayment_months": scheme["repayment_months"],

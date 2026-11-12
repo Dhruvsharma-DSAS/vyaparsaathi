@@ -63,6 +63,24 @@ class ChatProfileTests(unittest.TestCase):
         self.assertIn("Pune", question)
         self.assertIn("इलाके", question)
 
+    def test_completed_profile_points_to_simple_app_sections_in_each_language(self):
+        state = VyaparState(
+            user_profile=UserProfile(city="Bengaluru"),
+            business_context=BusinessContext(mode="discover"),
+        )
+
+        expected_terms = {
+            "English": "pilot",
+            "Hindi": "पायलट",
+            "Marathi": "पायलट",
+            "Gujarati": "પાયલોટ",
+            "Bengali": "পাইলট",
+        }
+        for language, term in expected_terms.items():
+            with self.subTest(language=language):
+                question = localized_question(None, language, state)
+                self.assertIn(term, question)
+
 
 if __name__ == "__main__":
     unittest.main()

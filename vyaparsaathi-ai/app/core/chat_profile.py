@@ -27,7 +27,7 @@ def localized_question(field: str | None, language: str, state: VyaparState) -> 
             "skill": "What skills or experience could you use in this business?",
             "area": "Which neighborhood in {city} are you considering?",
             "hours": "What hours can you work: morning, lunch, evening, or all day?",
-            "planning": "What would you like to explore first: location, busy hours, costs, or a launch plan?",
+            "planning": "Your profile is ready. Explore local markets and busy hours, or open My plan for costs, licences, and your 7-day pilot.",
         },
         "Hindi": {
             "business": "आप कौन-सा व्यवसाय शुरू करना या बढ़ाना चाहते हैं?",
@@ -35,7 +35,7 @@ def localized_question(field: str | None, language: str, state: VyaparState) -> 
             "skill": "इस व्यवसाय में आपके पास कौन-सा कौशल या अनुभव है?",
             "area": "आप {city} के किस इलाके में व्यवसाय करना चाहते हैं?",
             "hours": "आप किस समय काम कर सकते हैं—सुबह, दोपहर, शाम या पूरे दिन?",
-            "planning": "आप पहले किस बारे में जानना चाहेंगे—जगह, व्यस्त समय, खर्च या शुरू करने की योजना?",
+            "planning": "आपकी प्रोफ़ाइल तैयार है। स्थानीय बाज़ार और व्यस्त समय देखें, या खर्च, लाइसेंस और 7-दिन के पायलट के लिए मेरी योजना खोलें।",
         },
         "Marathi": {
             "business": "तुम्हाला कोणता व्यवसाय सुरू करायचा किंवा वाढवायचा आहे?",
@@ -43,7 +43,7 @@ def localized_question(field: str | None, language: str, state: VyaparState) -> 
             "skill": "या व्यवसायासाठी तुमच्याकडे कोणते कौशल्य किंवा अनुभव आहे?",
             "area": "{city} मधील कोणत्या भागात तुम्ही व्यवसायाचा विचार करत आहात?",
             "hours": "तुम्ही कोणत्या वेळी काम करू शकता—सकाळी, दुपारी, संध्याकाळी की पूर्ण दिवस?",
-            "planning": "तुम्हाला आधी कशाबद्दल जाणून घ्यायचे आहे—ठिकाण, गर्दीची वेळ, खर्च की व्यवसाय सुरू करण्याची योजना?",
+            "planning": "तुमची प्रोफाइल तयार आहे. स्थानिक बाजार आणि गर्दीची वेळ पाहा, किंवा खर्च, परवाने आणि 7-दिवसांच्या पायलटसाठी माझी योजना उघडा.",
         },
         "Gujarati": {
             "business": "તમે કયો વ્યવસાય શરૂ કરવા અથવા આગળ વધારવા માંગો છો?",
@@ -51,7 +51,7 @@ def localized_question(field: str | None, language: str, state: VyaparState) -> 
             "skill": "આ વ્યવસાય માટે તમારી પાસે કઈ કુશળતા અથવા અનુભવ છે?",
             "area": "તમે {city}ના કયા વિસ્તારમાં વ્યવસાય કરવાનું વિચારી રહ્યા છો?",
             "hours": "તમે કયા સમયે કામ કરી શકો છો—સવારે, બપોરે, સાંજે કે આખો દિવસ?",
-            "planning": "તમે પહેલાં શું જાણવા માંગો છો—સ્થળ, વ્યસ્ત સમય, ખર્ચ કે શરૂઆતની યોજના?",
+            "planning": "તમારી પ્રોફાઇલ તૈયાર છે. સ્થાનિક બજાર અને વ્યસ્ત સમય જુઓ, અથવા ખર્ચ, લાઇસન્સ અને 7-દિવસના પાયલોટ માટે મારી યોજના ખોલો.",
         },
         "Bengali": {
             "business": "আপনি কোন ব্যবসা শুরু করতে বা বাড়াতে চান?",
@@ -59,7 +59,7 @@ def localized_question(field: str | None, language: str, state: VyaparState) -> 
             "skill": "এই ব্যবসার জন্য আপনার কী দক্ষতা বা অভিজ্ঞতা আছে?",
             "area": "আপনি {city}-র কোন এলাকায় ব্যবসা করার কথা ভাবছেন?",
             "hours": "আপনি কখন কাজ করতে পারবেন—সকাল, দুপুর, সন্ধ্যা, না সারাদিন?",
-            "planning": "আপনি আগে কী জানতে চান—জায়গা, ব্যস্ত সময়, খরচ, না শুরু করার পরিকল্পনা?",
+            "planning": "আপনার প্রোফাইল তৈরি। স্থানীয় বাজার ও ব্যস্ত সময় দেখুন, অথবা খরচ, লাইসেন্স ও ৭ দিনের পাইলটের জন্য আমার পরিকল্পনা খুলুন।",
         },
     }
     localized = questions.get(language, questions["English"])

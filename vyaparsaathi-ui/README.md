@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VyaparSaathi City
 
-## Getting Started
+VyaparSaathi helps small-business owners explore a city market, plan costs, check permits and record a short pilot. The interface supports English, Hindi, Marathi, Gujarati and Bengali.
 
-First, run the development server:
+## Main areas
+
+- **Home**: choose Bengaluru or Pune and start in Discover or Launch mode.
+- **Saathi**: complete a short planning profile by text or voice.
+- **Explore**: review available market samples, busy-hour guidance, weather and ground checks.
+- **My plan**: work through cost estimates, preliminary scheme matches, licence checks and the 7-day pilot ledger.
+
+Planning answers and entries are saved in the current browser on the current device. Offline data is shown with a stale-data notice. Calculations, weather, translation and advisor responses need a working API connection.
+
+## Run locally
+
+Start the API from `vyaparsaathi-ai`:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+uvicorn main:app --reload
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Start the UI from this directory:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The UI uses `http://127.0.0.1:8000` by default. Set `NEXT_PUBLIC_API_BASE_URL` before starting Next.js to use another API URL.
 
-## Learn More
+## Data notes
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Market and business-template figures are labelled samples, not live local counts or quotes. There are no ward boundary files or verified City Pulse headlines in this repository. Scheme matches are preliminary; confirm current requirements with the linked official portal, lender or city office.

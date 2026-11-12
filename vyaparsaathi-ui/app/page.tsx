@@ -3,6 +3,12 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import axios from "axios";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
+import {
+  BottomNav,
+  SectionTabs,
+  TopAppBar,
+  type AppScreen,
+} from "./components/app-navigation";
 
 const languageOptions = [
   { code: "English", label: "English" },
@@ -15,7 +21,7 @@ const languageOptions = [
 type Language = (typeof languageOptions)[number]["code"];
 type City = "Bengaluru" | "Pune";
 type Mode = "discover" | "launch";
-type Screen = "home" | "advisor" | "market" | "time" | "money" | "plan";
+type Screen = AppScreen;
 
 type Translation = {
   greeting: string;
@@ -94,12 +100,12 @@ const copy: Record<Language, Translation> = {
     translationError: "Could not translate the conversation. Your previous language was restored.",
     sampleNotice: "Sample figures are clearly labelled. Check local conditions before making a decision.",
     marketTitle: "Local market",
-    marketMessage: "Market data tools are being connected. Until real city datasets are added, figures stay labelled as sample data.",
+    marketMessage: "These guide-based examples are samples, not live business listings. Verify any opportunity in the neighborhood.",
     planTitle: "My business plan",
     planMessage: "Your answers are saved on this device. Use the Money planner to calculate costs, break-even and funding needs.",
     navChat: "Saathi",
     navPlan: "My plan",
-    navMarket: "Market",
+    navMarket: "Explore",
     navHome: "Home",
     back: "Back to home",
     timeTitle: "Rush Clock",
@@ -148,12 +154,12 @@ const copy: Record<Language, Translation> = {
     translationError: "बातचीत का अनुवाद नहीं हो पाया। पिछली भाषा बहाल कर दी गई है।",
     sampleNotice: "नमूना आंकड़े स्पष्ट रूप से बताए गए हैं। निर्णय से पहले स्थानीय स्थिति जांचें।",
     marketTitle: "स्थानीय बाज़ार",
-    marketMessage: "स्थानीय बाज़ार के डेटा टूल जोड़े जा रहे हैं। असली शहर का डेटा आने तक आंकड़े नमूना ही रहेंगे।",
+    marketMessage: "ये गाइड के उदाहरण हैं, असली दुकानों की लाइव गिनती नहीं। अवसर को इलाके में जाकर जांचें।",
     planTitle: "मेरी व्यवसाय योजना",
     planMessage: "आपके जवाब इस डिवाइस पर सेव हैं। लागत, ब्रेक-ईवन और पूंजी की जरूरत निकालने के लिए पैसा योजनाकार खोलें।",
     navChat: "साथी",
     navPlan: "मेरी योजना",
-    navMarket: "बाज़ार",
+    navMarket: "खोजें",
     navHome: "होम",
     back: "होम पर वापस",
     timeTitle: "भीड़ का समय",
@@ -202,12 +208,12 @@ const copy: Record<Language, Translation> = {
     translationError: "संभाषणाचा अनुवाद होऊ शकला नाही. मागील भाषा पुन्हा सुरू केली आहे.",
     sampleNotice: "नमुना आकडे स्पष्टपणे दाखवले आहेत. निर्णयापूर्वी स्थानिक परिस्थिती तपासा.",
     marketTitle: "स्थानिक बाजार",
-    marketMessage: "स्थानिक बाजाराची डेटा साधने जोडली जात आहेत. शहराचा खरा डेटा मिळेपर्यंत आकडे नमुना म्हणूनच दाखवले जातील.",
+    marketMessage: "ही मार्गदर्शकातील उदाहरणे आहेत, प्रत्यक्ष दुकानांची थेट मोजणी नाही. संधीची परिसरात जाऊन खात्री करा.",
     planTitle: "माझी व्यवसाय योजना",
     planMessage: "तुमची उत्तरे या डिव्हाइसवर जतन केली आहेत. खर्च, ब्रेक-इव्हन आणि भांडवलाची गरज मोजण्यासाठी पैसे नियोजक उघडा.",
     navChat: "साथी",
     navPlan: "माझी योजना",
-    navMarket: "बाजार",
+    navMarket: "शोधा",
     navHome: "मुख्यपृष्ठ",
     back: "मुख्यपृष्ठावर परत",
     timeTitle: "गर्दीची वेळ",
@@ -256,12 +262,12 @@ const copy: Record<Language, Translation> = {
     translationError: "વાતચીતનો અનુવાદ થઈ શક્યો નથી. અગાઉની ભાષા પુનઃસ્થાપિત કરી છે.",
     sampleNotice: "નમૂનાના આંકડા સ્પષ્ટ રીતે દર્શાવ્યા છે. નિર્ણય પહેલાં સ્થાનિક સ્થિતિ તપાસો.",
     marketTitle: "સ્થાનિક બજાર",
-    marketMessage: "સ્થાનિક બજારનાં ડેટા સાધનો જોડાઈ રહ્યાં છે. શહેરનો વાસ્તવિક ડેટા ઉમેરાય ત્યાં સુધી આંકડા નમૂના તરીકે જ રહેશે.",
+    marketMessage: "આ માર્ગદર્શિકાનાં ઉદાહરણો છે, જીવંત દુકાનોની ગણતરી નથી. તકની સ્થળ પર જઈને ખાતરી કરો.",
     planTitle: "મારી વ્યવસાય યોજના",
     planMessage: "તમારા જવાબો આ ઉપકરણ પર સાચવ્યા છે. ખર્ચ, બ્રેક-ઈવન અને ભંડોળની જરૂર ગણવા માટે પૈસાનું આયોજન ખોલો.",
     navChat: "સાથી",
     navPlan: "મારી યોજના",
-    navMarket: "બજાર",
+    navMarket: "શોધો",
     navHome: "હોમ",
     back: "હોમ પર પાછા",
     timeTitle: "ભીડનો સમય",
@@ -310,12 +316,12 @@ const copy: Record<Language, Translation> = {
     translationError: "কথোপকথন অনুবাদ করা যায়নি। আগের ভাষা ফিরিয়ে দেওয়া হয়েছে।",
     sampleNotice: "নমুনার তথ্য স্পষ্টভাবে চিহ্নিত। সিদ্ধান্তের আগে স্থানীয় পরিস্থিতি যাচাই করুন।",
     marketTitle: "স্থানীয় বাজার",
-    marketMessage: "স্থানীয় বাজারের ডেটা টুল যোগ করা হচ্ছে। আসল শহরের ডেটা না আসা পর্যন্ত তথ্য নমুনা হিসেবেই দেখানো হবে।",
+    marketMessage: "এগুলি গাইডের উদাহরণ, সরাসরি দোকানের সংখ্যা নয়। সুযোগটি এলাকায় গিয়ে যাচাই করুন।",
     planTitle: "আমার ব্যবসার পরিকল্পনা",
     planMessage: "আপনার উত্তর এই ডিভাইসে সংরক্ষিত। খরচ, ব্রেক-ইভেন ও অর্থের প্রয়োজন হিসাব করতে টাকার পরিকল্পনা খুলুন।",
     navChat: "সাথী",
     navPlan: "আমার পরিকল্পনা",
-    navMarket: "বাজার",
+    navMarket: "খুঁজুন",
     navHome: "হোম",
     back: "হোমে ফিরে যান",
     timeTitle: "ব্যস্ত সময়",
@@ -534,19 +540,43 @@ type BusinessTemplate = {
   recipe?: RecipeIngredient[];
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isRecipeIngredient(value: unknown): value is RecipeIngredient {
+  if (!isRecord(value) || typeof value.name !== "string" || !isFiniteNumber(value.weight_g)) {
+    return false;
+  }
+  const costInputs = [
+    value.mandi_price_per_quintal,
+    value.retail_price_per_kg,
+    value.fixed_cost,
+  ];
+  return costInputs.every((cost) => cost === undefined || (isFiniteNumber(cost) && cost >= 0)) &&
+    costInputs.some((cost) => cost !== undefined);
+}
+
 function isBusinessTemplates(value: unknown): value is BusinessTemplate[] {
   if (!Array.isArray(value)) return false;
   return value.every((item) => {
-    if (typeof item !== "object" || item === null) return false;
-    const template = item as Record<string, unknown>;
+    if (!isRecord(item)) return false;
+    const template = item;
     return typeof template.id === "string" &&
       typeof template.name === "string" &&
       (template.model === "mobile" || template.model === "fixed" || template.model === "home") &&
-      typeof template.selling_price === "number" &&
-      typeof template.startup_cost === "number" &&
-      (typeof template.unit_cost === "number" || template.unit_cost === null) &&
+      isFiniteNumber(template.selling_price) &&
+      isFiniteNumber(template.startup_cost) &&
+      (isFiniteNumber(template.unit_cost) || template.unit_cost === null) &&
       typeof template.unit_cost_is_sample === "boolean" &&
-      (template.recipe === undefined || Array.isArray(template.recipe));
+      (template.fixed_monthly_cost === undefined ||
+        (isFiniteNumber(template.fixed_monthly_cost) && template.fixed_monthly_cost >= 0)) &&
+      (template.recipe === undefined ||
+        (Array.isArray(template.recipe) && template.recipe.every(isRecipeIngredient)));
   });
 }
 
@@ -913,13 +943,36 @@ type CityMarketData = {
 };
 
 function isCityMarketData(value: unknown, city: City): value is CityMarketData {
-  if (typeof value !== "object" || value === null) return false;
-  const data = value as Record<string, unknown>;
+  if (!isRecord(value)) return false;
+  const data = value;
   return data.city === city &&
-    Array.isArray(data.areas) &&
+    Array.isArray(data.areas) && data.areas.every((area) => typeof area === "string") &&
     typeof data.map_available === "boolean" &&
-    Array.isArray(data.market_samples) &&
-    Array.isArray(data.rush_samples) &&
+    Array.isArray(data.market_samples) && data.market_samples.every((sample) =>
+      isRecord(sample) &&
+      typeof sample.area === "string" &&
+      typeof sample.category === "string" &&
+      isFiniteNumber(sample.places_found) &&
+      isFiniteNumber(sample.population) &&
+      isFiniteNumber(sample.city_median_places_per_10000) &&
+      typeof sample.supply_market === "string" &&
+      isFiniteNumber(sample.supply_distance_km) &&
+      typeof sample.confidence === "string" &&
+      isFiniteNumber(sample.places_per_10000) &&
+      isFiniteNumber(sample.gap_fraction) &&
+      typeof sample.label === "string",
+    ) &&
+    Array.isArray(data.rush_samples) && data.rush_samples.every((sample) =>
+      isRecord(sample) &&
+      typeof sample.station === "string" &&
+      typeof sample.day_type === "string" &&
+      typeof sample.working_hours === "string" &&
+      typeof sample.confidence === "string" &&
+      isRecord(sample.hourly_rush_index) &&
+      Object.entries(sample.hourly_rush_index).every(([hour, index]) =>
+        /^\d{1,2}$/.test(hour) && isFiniteNumber(index) && index >= 0 && index <= 100,
+      ),
+    ) &&
     typeof data.confidence === "string";
 }
 
@@ -1006,7 +1059,6 @@ function isLanguage(value: string): value is Language {
 export default function VyaparSaathiCityApp() {
   const [activeScreen, setActiveScreen] = useState<Screen>("home");
   const [language, setLanguage] = useState<Language>("English");
-  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "ai", text: copy.English.greeting, time: "" },
   ]);
@@ -1389,12 +1441,15 @@ export default function VyaparSaathiCityApp() {
     setActiveScreen("advisor");
   };
 
+  const navigateTo = (screen: Screen) => {
+    if (screen === "market" && (activeScreen === "market" || activeScreen === "time")) return;
+    if (screen === "plan" && (activeScreen === "plan" || activeScreen === "money")) return;
+    setActiveScreen(screen);
+  };
+
   const changeLanguage = async (nextLanguage: Language) => {
     setLanguageError("");
-    if (nextLanguage === language) {
-      setIsLanguageMenuOpen(false);
-      return;
-    }
+    if (nextLanguage === language) return;
     if (listening) {
       try {
         await SpeechRecognition.stopListening();
@@ -1414,7 +1469,6 @@ export default function VyaparSaathiCityApp() {
     const cachedTranscript = transcriptCache[nextLanguage];
     if (cachedTranscript) {
       setMessages(cachedTranscript);
-      setIsLanguageMenuOpen(false);
       return;
     }
 
@@ -1438,7 +1492,6 @@ export default function VyaparSaathiCityApp() {
       }));
       setLanguageError(copy[previousLanguage].translationError);
     }
-    setIsLanguageMenuOpen(false);
   };
 
   const sendMessage = async () => {
@@ -1849,70 +1902,17 @@ export default function VyaparSaathiCityApp() {
     }
   };
 
-  const TopAppBar = ({ title = "VyaparSaathi City" }: { title?: string }) => (
-    <header className="fixed top-0 left-0 right-0 z-50 mx-auto flex h-16 max-w-md items-center justify-between border-b border-outline-variant bg-surface px-4">
-      <div className="flex items-center gap-3">
-        <span className="material-symbols-outlined text-primary" aria-hidden="true">storefront</span>
-        <div className="min-w-0">
-          <span className="font-bold">{title}</span>
-          {!isOnline && <span className="ml-2 rounded-full bg-amber-100 px-2 py-1 text-[9px] font-bold text-amber-900">{t.offlineLabel}</span>}
-        </div>
-      </div>
-      <div className="relative">
-        <button
-          type="button"
-          aria-label="Change language"
-          aria-expanded={isLanguageMenuOpen}
-          onClick={() => setIsLanguageMenuOpen((open) => !open)}
-          className="material-symbols-outlined rounded-lg p-2 text-primary hover:bg-surface-container"
-        >translate</button>
-        {isLanguageMenuOpen && (
-          <div className="absolute right-0 top-11 z-50 w-36 rounded-xl border border-outline-variant bg-white p-1.5 shadow-xl">
-            {languageOptions.map((option) => (
-              <button
-                type="button"
-                key={option.code}
-                onClick={() => void changeLanguage(option.code)}
-                className={`w-full rounded-lg px-3 py-2 text-left text-sm ${language === option.code ? "bg-primary-container/20 font-bold text-primary" : "text-on-surface hover:bg-surface-container-low"}`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </header>
-  );
-
-  const BottomNav = () => (
-    <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-50 mx-auto flex max-w-md justify-around rounded-t-2xl bg-white px-3 py-3 pb-6 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-      {([
-        ["home", "home", t.navHome],
-        ["advisor", "forum", t.navChat],
-        ["market", "map", t.navMarket],
-        ["time", "schedule", t.timeTitle],
-        ["money", "payments", money.navLabel],
-        ["plan", "assignment", t.navPlan],
-      ] as const).map(([screen, icon, label]) => (
-        <button
-          type="button"
-          key={screen}
-          onClick={() => setActiveScreen(screen)}
-          aria-current={activeScreen === screen ? "page" : undefined}
-          className={`flex flex-col items-center rounded-xl px-3 py-1 ${activeScreen === screen ? "bg-primary-container/20 text-primary" : "text-outline"}`}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">{icon}</span>
-          <span className="mt-1 text-[10px] font-semibold">{label}</span>
-        </button>
-      ))}
-    </nav>
-  );
-
   return (
     <div className="relative mx-auto min-h-screen max-w-md overflow-hidden bg-surface text-on-surface shadow-2xl">
       {activeScreen === "home" && (
         <div className="min-h-screen px-5 pb-28 pt-24">
-          <TopAppBar />
+          <TopAppBar
+            online={isOnline}
+            offlineLabel={t.offlineLabel}
+            language={language}
+            languages={languageOptions}
+            onLanguageChange={changeLanguage}
+          />
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-primary">VyaparSaathi City</p>
           <h1 className="font-sans text-3xl font-extrabold leading-tight">{t.welcome}</h1>
           <p className="mt-3 text-outline">{t.welcomeDescription}</p>
@@ -1965,14 +1965,43 @@ export default function VyaparSaathiCityApp() {
             </button>
           </div>
 
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setActiveScreen("market")}
+              className="rounded-xl border border-outline-variant bg-white px-3 py-3 text-sm font-semibold text-on-surface"
+            >
+              <span className="material-symbols-outlined mr-1 align-middle text-base" aria-hidden="true">explore</span>
+              {t.navMarket}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveScreen("plan")}
+              className="rounded-xl border border-outline-variant bg-white px-3 py-3 text-sm font-semibold text-on-surface"
+            >
+              <span className="material-symbols-outlined mr-1 align-middle text-base" aria-hidden="true">assignment</span>
+              {t.navPlan}
+            </button>
+          </div>
+
           <p className="mt-5 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">{t.sampleNotice}</p>
-          <BottomNav />
+          <BottomNav
+            activeScreen={activeScreen}
+            onNavigate={navigateTo}
+            labels={{ home: t.navHome, advisor: t.navChat, explore: t.navMarket, plan: t.navPlan }}
+          />
         </div>
       )}
 
       {activeScreen === "advisor" && (
         <div className="flex h-screen flex-col">
-          <TopAppBar />
+          <TopAppBar
+            online={isOnline}
+            offlineLabel={t.offlineLabel}
+            language={language}
+            languages={languageOptions}
+            onLanguageChange={changeLanguage}
+          />
           <div className="fixed left-0 right-0 top-16 z-40 mx-auto flex max-w-md items-center gap-4 bg-surface px-4 py-3">
             <span className="whitespace-nowrap text-xs font-semibold text-outline">{t.profile} {progress.percent}%</span>
             <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container-highest">
@@ -2027,17 +2056,34 @@ export default function VyaparSaathiCityApp() {
             {listening && <p className="mt-2 text-xs text-primary" role="status">{t.voiceListening}</p>}
             {visibleVoiceError && <p className="mt-2 text-xs text-rose-700" role="alert">{visibleVoiceError}</p>}
           </div>
-          <BottomNav />
+          <BottomNav
+            activeScreen={activeScreen}
+            onNavigate={navigateTo}
+            labels={{ home: t.navHome, advisor: t.navChat, explore: t.navMarket, plan: t.navPlan }}
+          />
         </div>
       )}
 
       {activeScreen === "market" && (
         <div className="min-h-screen px-5 pb-28 pt-24">
-          <TopAppBar title={t.marketTitle} />
+          <TopAppBar
+            title={t.marketTitle}
+            online={isOnline}
+            offlineLabel={t.offlineLabel}
+            language={language}
+            languages={languageOptions}
+            onLanguageChange={changeLanguage}
+          />
           <h1 className="text-2xl font-bold">{t.marketTitle} · {vyaparState.user_profile.city}</h1>
           <p className="mt-2 text-sm text-outline">{t.marketMessage}</p>
           {!isOnline && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">{t.offlineStatus}</p>}
           {marketDataStale && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">{t.cachedNotice}</p>}
+          <SectionTabs
+            firstLabel={t.marketTitle}
+            secondLabel={t.timeTitle}
+            selected="first"
+            onSelect={(section) => setActiveScreen(section === "first" ? "market" : "time")}
+          />
           <label htmlFor="market-category" className="mb-2 mt-5 block text-sm font-bold">{t.category}</label>
           <select
             id="market-category"
@@ -2099,14 +2145,31 @@ export default function VyaparSaathiCityApp() {
             </section>
           )}
           <p className="mt-4 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">{t.sampleNotice}</p>
-          <BottomNav />
+          <BottomNav
+            activeScreen={activeScreen}
+            onNavigate={navigateTo}
+            labels={{ home: t.navHome, advisor: t.navChat, explore: t.navMarket, plan: t.navPlan }}
+          />
         </div>
       )}
 
       {activeScreen === "time" && (
         <div className="min-h-screen px-5 pb-28 pt-24">
-          <TopAppBar title={t.timeTitle} />
+          <TopAppBar
+            title={t.timeTitle}
+            online={isOnline}
+            offlineLabel={t.offlineLabel}
+            language={language}
+            languages={languageOptions}
+            onLanguageChange={changeLanguage}
+          />
           <h1 className="text-2xl font-bold">{t.timeTitle}</h1>
+          <SectionTabs
+            firstLabel={t.marketTitle}
+            secondLabel={t.timeTitle}
+            selected="second"
+            onSelect={(section) => setActiveScreen(section === "first" ? "market" : "time")}
+          />
           {marketLoading && <p className="mt-4 text-sm text-outline" role="status">{t.weatherLoading}</p>}
           {marketError && <p className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-800" role="alert">{marketError}</p>}
           {rushSample && (
@@ -2291,17 +2354,34 @@ export default function VyaparSaathiCityApp() {
             <p className="mt-2 text-sm text-outline">{t.noNews}</p>
           </section>
           <p className="mt-4 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">{t.sampleNotice}</p>
-          <BottomNav />
+          <BottomNav
+            activeScreen={activeScreen}
+            onNavigate={navigateTo}
+            labels={{ home: t.navHome, advisor: t.navChat, explore: t.navMarket, plan: t.navPlan }}
+          />
         </div>
       )}
 
       {activeScreen === "money" && (
         <div className="min-h-screen px-5 pb-28 pt-24">
-          <TopAppBar title={money.title} />
+          <TopAppBar
+            title={money.title}
+            online={isOnline}
+            offlineLabel={t.offlineLabel}
+            language={language}
+            languages={languageOptions}
+            onLanguageChange={changeLanguage}
+          />
           <h1 className="text-2xl font-bold">{money.title}</h1>
           <p className="mt-2 text-sm text-outline">{t.sampleNotice}</p>
           {!isOnline && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">{t.offlineStatus}</p>}
           {businessTemplatesStale && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">{t.cachedNotice}</p>}
+          <SectionTabs
+            firstLabel={t.navPlan}
+            secondLabel={money.navLabel}
+            selected="second"
+            onSelect={(section) => setActiveScreen(section === "first" ? "plan" : "money")}
+          />
           {moneyError && <p className="mt-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-800" role="alert">{moneyError}</p>}
 
           <section className="mt-4 rounded-2xl border border-outline-variant/50 bg-white p-4 shadow-sm">
@@ -2570,17 +2650,34 @@ export default function VyaparSaathiCityApp() {
               ))}
             </ul>
           </section>
-          <BottomNav />
+          <BottomNav
+            activeScreen={activeScreen}
+            onNavigate={navigateTo}
+            labels={{ home: t.navHome, advisor: t.navChat, explore: t.navMarket, plan: t.navPlan }}
+          />
         </div>
       )}
 
       {activeScreen === "plan" && (
         <div className="min-h-screen px-5 pb-28 pt-24">
-          <TopAppBar title={t.planTitle} />
+          <TopAppBar
+            title={t.planTitle}
+            online={isOnline}
+            offlineLabel={t.offlineLabel}
+            language={language}
+            languages={languageOptions}
+            onLanguageChange={changeLanguage}
+          />
           <section className="mt-8 rounded-2xl border border-outline-variant/50 bg-white p-5 shadow-sm">
             <h1 className="text-xl font-bold">{t.planTitle}</h1>
             <p className="mt-3 text-sm leading-relaxed text-outline">{t.planMessage}</p>
             {!isOnline && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">{t.offlineStatus}</p>}
+            <SectionTabs
+              firstLabel={t.navPlan}
+              secondLabel={money.navLabel}
+              selected="first"
+              onSelect={(section) => setActiveScreen(section === "first" ? "plan" : "money")}
+            />
             <dl className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between gap-3">
                 <dt>{t.city}</dt><dd className="font-semibold">{vyaparState.user_profile.city}</dd>
@@ -2721,7 +2818,11 @@ export default function VyaparSaathiCityApp() {
             )}
           </section>
           <p className="mt-4 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">{t.sampleNotice}</p>
-          <BottomNav />
+          <BottomNav
+            activeScreen={activeScreen}
+            onNavigate={navigateTo}
+            labels={{ home: t.navHome, advisor: t.navChat, explore: t.navMarket, plan: t.navPlan }}
+          />
         </div>
       )}
     </div>

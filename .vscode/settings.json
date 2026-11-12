@@ -1,3 +1,11 @@
 {
-    "python.defaultInterpreterPath": "${workspaceFolder}/vyaparsaathi-ai/venv/bin/python"
+    "python.defaultInterpreterPath": "${workspaceFolder}/vyaparsaathi-ai/venv/bin/python",
+    "chat.tools.terminal.autoApprove": {
+        "/^python3 -c \"import importlib\\.util; print\\(\\{name: importlib\\.util\\.find_spec\\(name\\) is not None for name in \\['pypdf','PyPDF2','fitz','pdfplumber'\\]\\}\\)\" && ls -lh /Users/rupamsen/Downloads/Construct\\.pdf /Users/rupamsen/Downloads/VyaparSaathi_City_Book1_Complete_Guide\\.pdf$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "swift": true,
+        "git remote": true
+    }
 }
