@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 type DataSummary = { tables: Array<{ label: string; rows: number }> };
 
 export function SettingsScreen() {
-  const { copy, theme, setTheme, language, changeLanguage, resetAll, exportData, syncState } = useApp();
+  const { copy, theme, setTheme, language, changeLanguage, resetAll, exportData, syncState, languageStatus } = useApp();
   const { user, signOut, status, showSignIn } = useAuth();
   const [summary, setSummary] = useState<DataSummary | null>(null);
 
@@ -68,7 +68,7 @@ export function SettingsScreen() {
           <CardTitle icon="translate" title="Language" />
           <div className="grid grid-cols-2 gap-2">
             {languageOptions.map((option) => (
-              <button key={option.code} type="button" aria-pressed={language === option.code} onClick={() => void changeLanguage(option.code)} className={choiceClass(language === option.code)}>
+              <button key={option.code} type="button" aria-pressed={language === option.code} disabled={languageStatus.phase === "translating"} onClick={() => void changeLanguage(option.code)} className={clsx(choiceClass(language === option.code), "disabled:opacity-60")}>
                 {option.label}
               </button>
             ))}

@@ -22,7 +22,8 @@ export function composeDraft(draft: string, transcript: string) {
 }
 
 export function AdvisorScreen() {
-  const { copy, language, messages, setMessages, vyaparState, setVyaparState, progress, newChat } = useApp();
+  const { copy, language, messages, setMessages, vyaparState, setVyaparState, progress, newChat, languageStatus } = useApp();
+  const translating = languageStatus.phase === "translating";
   const { t, x } = copy;
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
@@ -85,7 +86,7 @@ export function AdvisorScreen() {
   };
 
   const send = async () => {
-    if (!message || loading) return;
+    if (!message || loading || translating) return;
     if (listening) await SpeechRecognition.stopListening().catch(() => setVoiceError(t.voicePermission));
     resetTranscript();
     setDraft("");
@@ -168,7 +169,8 @@ export function AdvisorScreen() {
               item.role === "user" && "rounded-br-md bg-accent text-accent-ink",
               item.role === "ai" && !item.failed && "rounded-bl-md border border-line bg-surface text-ink",
               item.failed && "rounded-bl-md border border-bad/30 bg-bad-soft text-bad",
-            )}>
+              translating && item.text !== copy.t.greeting && "translating-bubble",
+            )} aria-busy={translating || undefined}>
               {item.failed && <Icon name="cloud_off" className="mr-1.5 align-[-3px] text-[18px]" />}
               {item.text}
             </div>
@@ -225,7 +227,7 @@ export function AdvisorScreen() {
             type="button"
             whileTap={{ scale: 0.92 }}
             onClick={() => void send()}
-            disabled={loading || !message}
+            disabled={loading || translating || !message}
             aria-label="Send message"
             className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-accent-ink shadow-md transition disabled:opacity-40 disabled:shadow-none"
           ><Icon name="arrow_upward" /></motion.button>

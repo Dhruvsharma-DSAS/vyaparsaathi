@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
   type Dispatch,
@@ -88,6 +89,10 @@ type AppContextValue = Persisted & Setters & {
   language: Language;
   changeLanguage: (language: Language) => Promise<void>;
   languageError: string;
+  /** Progress of the last language change, for loading and result messages. */
+  languageStatus: LanguageStatus;
+  retryTranslation: () => Promise<void>;
+  dismissLanguageStatus: () => void;
   screen: Screen;
   navigate: (screen: Screen, tab?: ExploreTab) => void;
   exploreTab: ExploreTab;
@@ -104,6 +109,12 @@ type AppContextValue = Persisted & Setters & {
   syncState: "idle" | "saving" | "saved" | "error";
   exportData: () => string;
 };
+
+export type LanguageStatus =
+  | { phase: "idle" }
+  | { phase: "translating"; language: Language }
+  | { phase: "done"; language: Language }
+  | { phase: "failed"; language: Language; from: Language; source: ChatMessage[] };
 
 const AppContext = createContext<AppContextValue | null>(null);
 
@@ -123,6 +134,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
   const [hydrated, setHydrated] = useState(false);
   const [languageError, setLanguageError] = useState("");
+  const [languageStatus, setLanguageStatus] = useState<LanguageStatus>({ phase: "idle" });
   const [transcriptCache, setTranscriptCache] = useState<Partial<Record<Language, ChatMessage[]>>>({});
 
   const [messages, setMessages] = useState<ChatMessage[]>([{ role: "ai", text: copy.English.greeting, time: "" }]);
@@ -255,9 +267,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.scrollTo({ top: 0 });
   }, []);
 
+  const statusTimer = useRef<number | undefined>(undefined);
+  const showStatus = useCallback((status: LanguageStatus, autoHideMs?: number) => {
+    window.clearTimeout(statusTimer.current);
+    setLanguageStatus(status);
+    if (autoHideMs) statusTimer.current = window.setTimeout(() => setLanguageStatus({ phase: "idle" }), autoHideMs);
+  }, []);
+
+  /** Translates the visible chat into `target`, reporting progress through languageStatus. */
+  const translateTranscript = useCallback(async (source: ChatMessage[], from: Language, target: Language) => {
+    // Swap the built-in greeting right away; the rest is translated by the API.
+    setMessages(source.map((message) =>
+      message.role === "ai" && message.text === copy[from].greeting ? { ...message, text: copy[target].greeting } : message));
+    const toTranslate = source.filter((message) => !(message.role === "ai" && message.text === copy[from].greeting));
+    if (toTranslate.length === 0) {
+      showStatus({ phase: "done", language: target }, 1800);
+      return;
+    }
+    showStatus({ phase: "translating", language: target });
+    try {
+      const { chat_history: translated } = await api.translateChat(source, target);
+      if (!Array.isArray(translated) || translated.length !== source.length ||
+        translated.some((message) => typeof message.text !== "string" || !message.text.trim())) {
+        throw new Error("Incomplete translation");
+      }
+      const merged = source.map((message, index) => ({ ...message, text: translated[index].text }));
+      setMessages(merged);
+      setTranscriptCache((cache) => ({ ...cache, [target]: merged }));
+      showStatus({ phase: "done", language: target }, 1800);
+    } catch {
+      // Keep the new language; the user can retry translating the older messages.
+      showStatus({ phase: "failed", language: target, from, source });
+    }
+  }, [showStatus]);
+
   const changeLanguage = useCallback(async (next: Language) => {
     setLanguageError("");
-    if (next === language) return;
+    if (next === language || languageStatus.phase === "translating") return;
     const previous = language;
     setLanguage(next);
     updateProfile({ language: next });
@@ -265,30 +311,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const cached = transcriptCache[next];
     if (cached) {
       setMessages(cached);
+      showStatus({ phase: "done", language: next }, 1800);
       return;
     }
-    // A fresh conversation only holds the greeting, which we already have in every language.
-    if (messages.length === 1 && messages[0].role === "ai") {
-      setMessages([{ role: "ai", text: copy[next].greeting, time: "" }]);
-      return;
-    }
-    // Swap the built-in greeting right away; the rest is translated by the API.
-    const withGreeting = messages.map((message) =>
-      message.role === "ai" && message.text === copy[previous].greeting ? { ...message, text: copy[next].greeting } : message);
-    setMessages(withGreeting);
-    try {
-      const { chat_history: translated } = await api.translateChat(messages, next);
-      if (!Array.isArray(translated) || translated.length !== messages.length ||
-        translated.some((message) => typeof message.text !== "string" || !message.text.trim())) {
-        throw new Error("Incomplete translation");
-      }
-      const merged = messages.map((message, index) => ({ ...message, text: translated[index].text }));
-      setMessages(merged);
-      setTranscriptCache((cache) => ({ ...cache, [next]: merged }));
-    } catch {
-      // Keep the new language; older messages simply stay as they were written.
-    }
-  }, [language, messages, transcriptCache, updateProfile]);
+    await translateTranscript(messages, previous, next);
+  }, [language, languageStatus.phase, messages, transcriptCache, updateProfile, showStatus, translateTranscript]);
+
+  const retryTranslation = useCallback(async () => {
+    if (languageStatus.phase !== "failed") return;
+    await translateTranscript(languageStatus.source, languageStatus.from, languageStatus.language);
+  }, [languageStatus, translateTranscript]);
+
+  const dismissLanguageStatus = useCallback(() => showStatus({ phase: "idle" }), [showStatus]);
 
   const newChat = useCallback(() => {
     setTranscriptCache({});
@@ -319,7 +353,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const exportData = useCallback(() => JSON.stringify(snapshot, null, 2), [snapshot]);
 
   const value: AppContextValue = {
-    copy: getCopy(language), language, changeLanguage, languageError,
+    copy: getCopy(language), language, changeLanguage, languageError, languageStatus, retryTranslation, dismissLanguageStatus,
     screen, navigate, exploreTab, setExploreTab, theme, setTheme: setThemeState,
     isOnline, hydrated, setCity, updateProfile, progress, resetAll, exportData, syncState, newChat,
     messages, setMessages, vyaparState, setVyaparState, financeInputs, setFinanceInputs,

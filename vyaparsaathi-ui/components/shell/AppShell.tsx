@@ -4,6 +4,7 @@ import { clsx } from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 import { Icon } from "@/components/ui";
+import { LanguageStatusBanner } from "@/components/shell/LanguageStatusBanner";
 import { navItems, screenSection } from "@/lib/config";
 import { languageOptions } from "@/lib/i18n";
 import { useApp } from "@/state/AppProvider";
@@ -11,17 +12,20 @@ import { useApp } from "@/state/AppProvider";
 /** Same frame as the original app: a phone-width column, fixed top bar and fixed bottom nav. */
 
 function LanguageMenu() {
-  const { language, changeLanguage } = useApp();
+  const { language, changeLanguage, languageStatus } = useApp();
   const [open, setOpen] = useState(false);
+  const busy = languageStatus.phase === "translating";
   return (
     <div className="relative">
       <button
         type="button"
         aria-label="Change language"
         aria-expanded={open}
+        aria-busy={busy}
+        disabled={busy}
         onClick={() => setOpen((value) => !value)}
         className="grid h-10 w-10 place-items-center rounded-full text-ink/80 transition hover:bg-accent-soft hover:text-accent active:scale-95"
-      ><Icon name="translate" className="text-[21px]" /></button>
+      >{busy ? <Icon name="progress_activity" className="animate-spin text-[21px] text-accent" /> : <Icon name="translate" className="text-[21px]" />}</button>
       {open && (
         <div className="absolute right-0 top-12 z-[1100] w-40 rounded-2xl border border-line bg-surface p-1.5 shadow-xl">
           {languageOptions.map((option) => (
@@ -82,6 +86,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           ><Icon name="settings" className="text-[21px]" /></button>
         </div>
       </header>
+
+      <LanguageStatusBanner />
 
       <main className="min-h-screen px-5 pb-32 pt-22">
         {!isOnline && <p className="mb-3 rounded-2xl bg-warn-soft p-3 text-xs text-warn">{copy.t.offlineStatus}</p>}

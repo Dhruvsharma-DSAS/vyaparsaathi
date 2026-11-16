@@ -70,6 +70,9 @@ export type ExtraCopy = {
   retry: string;
   sendHint: string;
   newChat: string;
+  translatingTo: string;
+  languageChanged: string;
+  translateFailed: string;
 };
 
 export const extraCopy: Record<Language, ExtraCopy> = {
@@ -142,6 +145,9 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     retry: "Try again",
     sendHint: "Enter to send · Shift + Enter for a new line",
     newChat: "New chat",
+    translatingTo: "Translating to {language}…",
+    languageChanged: "Language changed to {language}",
+    translateFailed: "Couldn't translate the earlier messages.",
   },
   Hindi: {
     tagline: "छोटे व्यवसाय की योजना के लिए आपकी बाज़ार बही",
@@ -212,6 +218,9 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     retry: "फिर कोशिश करें",
     sendHint: "भेजने के लिए Enter · नई पंक्ति के लिए Shift + Enter",
     newChat: "नई बातचीत",
+    translatingTo: "{language} में अनुवाद हो रहा है…",
+    languageChanged: "भाषा {language} में बदली गई",
+    translateFailed: "पिछले संदेशों का अनुवाद नहीं हो सका।",
   },
   Marathi: {
     tagline: "छोट्या व्यवसायाच्या नियोजनासाठी तुमची बाजार वही",
@@ -282,6 +291,9 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     retry: "पुन्हा प्रयत्न करा",
     sendHint: "पाठवण्यासाठी Enter · नवीन ओळीसाठी Shift + Enter",
     newChat: "नवीन संभाषण",
+    translatingTo: "{language} मध्ये भाषांतर होत आहे…",
+    languageChanged: "भाषा {language} मध्ये बदलली",
+    translateFailed: "आधीच्या संदेशांचे भाषांतर होऊ शकले नाही.",
   },
   Gujarati: {
     tagline: "નાના વ્યવસાયના આયોજન માટે તમારી બજાર ખાતાવહી",
@@ -352,6 +364,9 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     retry: "ફરી પ્રયાસ કરો",
     sendHint: "મોકલવા Enter · નવી લાઇન માટે Shift + Enter",
     newChat: "નવી વાતચીત",
+    translatingTo: "{language} માં અનુવાદ થઈ રહ્યો છે…",
+    languageChanged: "ભાષા {language} માં બદલાઈ",
+    translateFailed: "અગાઉના સંદેશાઓનો અનુવાદ થઈ શક્યો નથી.",
   },
   Bengali: {
     tagline: "ছোট ব্যবসার পরিকল্পনার জন্য আপনার বাজারের খাতা",
@@ -422,5 +437,8 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     retry: "আবার চেষ্টা করুন",
     sendHint: "পাঠাতে Enter · নতুন লাইনের জন্য Shift + Enter",
     newChat: "নতুন কথোপকথন",
+    translatingTo: "{language}-এ অনুবাদ হচ্ছে…",
+    languageChanged: "ভাষা {language}-এ বদলানো হয়েছে",
+    translateFailed: "আগের বার্তাগুলি অনুবাদ করা যায়নি।",
   },
 };
