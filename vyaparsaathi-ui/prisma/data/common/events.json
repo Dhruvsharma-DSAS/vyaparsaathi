@@ -1,0 +1,7 @@
+[
+  {"name":"Deepavali / Diwali shopping","city":"both","month":10,"effect":"demand_up"},
+  {"name":"Ganeshotsav","city":"pune","month":9,"effect":"demand_up_and_traffic"},
+  {"name":"Bengaluru Karaga","city":"bengaluru","month":4,"effect":"demand_up"},
+  {"name":"Kadlekai Parishe (Basavanagudi)","city":"bengaluru","month":11,"effect":"demand_up"},
+  {"name":"Monsoon peak","city":"both","month":7,"effect":"rain_risk"}
+]

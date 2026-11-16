@@ -1,0 +1,81 @@
+{
+  "generated_at_utc": "2026-11-09T05:54:17.487243+00:00",
+  "total_pois": 32307,
+  "weather_hours": 17520,
+  "cities": {
+    "bengaluru": {
+      "total": 24665,
+      "categories": [
+        [
+          "restaurant",
+          3415
+        ],
+        [
+          "school",
+          1846
+        ],
+        [
+          "fast_food",
+          1834
+        ],
+        [
+          "clothes",
+          1526
+        ],
+        [
+          "bank",
+          1491
+        ],
+        [
+          "hospital",
+          1181
+        ],
+        [
+          "cafe",
+          1152
+        ],
+        [
+          "pharmacy",
+          1023
+        ]
+      ]
+    },
+    "pune": {
+      "total": 7642,
+      "categories": [
+        [
+          "restaurant",
+          1114
+        ],
+        [
+          "hospital",
+          808
+        ],
+        [
+          "bank",
+          503
+        ],
+        [
+          "fast_food",
+          501
+        ],
+        [
+          "cafe",
+          437
+        ],
+        [
+          "school",
+          386
+        ],
+        [
+          "clothes",
+          362
+        ],
+        [
+          "pharmacy",
+          223
+        ]
+      ]
+    }
+  }
+}

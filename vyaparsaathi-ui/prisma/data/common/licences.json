@@ -1,0 +1,44 @@
+[
+  {
+    "id": "fssai_basic",
+    "name": "FSSAI basic registration",
+    "why": "Check the applicable food-business registration route. FSSAI\u2019s March 2026 reform introduced deemed registration for street food vendors registered with a Municipal Corporation or Town Vending Committee. Other food businesses should check FoSCoS for the applicable category.",
+    "where": "foscos.fssai.gov.in",
+    "url": "https://foscos.fssai.gov.in",
+    "time": "Online, usually days",
+    "source_url": "https://www.fssai.gov.in/upload/uploadfiles/files/Press%20Release_FSSAI%20Reforms_130326.pdf",
+    "checked_on": "2026-11-05"
+  },
+  {
+    "id": "vending_certificate",
+    "name": "Street vending certificate / ID",
+    "why": "Street Vendors Act 2014: vending is allowed in notified zones with a certificate from the Town Vending Committee.",
+    "where": "City corporation office (PMC in Pune, GBA in Bengaluru)",
+    "url": "",
+    "time": "Depends on city survey cycle"
+  },
+  {
+    "id": "shop_establishment",
+    "name": "Shop and establishment registration",
+    "why": "Needed for a fixed shop (Maharashtra Shops Act / Karnataka Shops Act).",
+    "where": "State labour department portal",
+    "url": "",
+    "time": "Online"
+  },
+  {
+    "id": "trade_licence",
+    "name": "City trade licence",
+    "why": "Many trades in a fixed shop need a city trade licence.",
+    "where": "PMC / GBA (BBMP) online services",
+    "url": "",
+    "time": "Online + inspection"
+  },
+  {
+    "id": "udyam",
+    "name": "Udyam registration",
+    "why": "Free MSME identity. Helps with loans and schemes.",
+    "where": "udyamregistration.gov.in",
+    "url": "https://udyamregistration.gov.in",
+    "time": "Online, same day"
+  }
+]

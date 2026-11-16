@@ -1,0 +1,38 @@
+{
+ "date": "2026-10-19",
+ "sample": true,
+ "bengaluru": {
+  "summary": "Sample: office footfall strong around Koramangala and Indiranagar this week; road work near Silk Board slows evening traffic; Deepavali shopping expected to raise evening demand.",
+  "items": [
+   {
+    "title": "Sample: New co-working block opens near Koramangala 80 Feet Road",
+    "tag": "demand_up"
+   },
+   {
+    "title": "Sample: Road widening near Silk Board junction for 3 weeks",
+    "tag": "risk"
+   },
+   {
+    "title": "Sample: Deepavali markets expected to draw heavy crowds",
+    "tag": "festival"
+   }
+  ]
+ },
+ "pune": {
+  "summary": "Sample: Nagar Road metro stretch busy at peak hours; drive against encroachment near Yerawada market; Diwali shopping rush expected.",
+  "items": [
+   {
+    "title": "Sample: Metro ridership rises on Ramwadi stretch",
+    "tag": "demand_up"
+   },
+   {
+    "title": "Sample: Encroachment drive near Yerawada market this weekend",
+    "tag": "risk"
+   },
+   {
+    "title": "Sample: Diwali shopping rush expected in Viman Nagar malls",
+    "tag": "festival"
+   }
+  ]
+ }
+}

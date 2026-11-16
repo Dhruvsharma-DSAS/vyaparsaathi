@@ -1,0 +1,30 @@
+{
+ "date": "2026-10-19",
+ "sample": true,
+ "bengaluru": {
+  "Onion": 31.5,
+  "Tomato": 24.0,
+  "Cabbage": 14.0,
+  "Potato": 26.0,
+  "Green Chilli": 42.0,
+  "Coriander(Leaves)": 55.0,
+  "Lemon": 60.0,
+  "Carrot": 34.0
+ },
+ "pune": {
+  "Onion": 28.0,
+  "Tomato": 22.0,
+  "Cabbage": 12.5,
+  "Potato": 24.0,
+  "Green Chilli": 38.0,
+  "Coriander(Leaves)": 48.0,
+  "Lemon": 55.0,
+  "Carrot": 30.0
+ },
+ "last_month": {
+  "Onion": 26.0,
+  "Tomato": 30.0,
+  "Cabbage": 13.0,
+  "Potato": 25.0
+ }
+}

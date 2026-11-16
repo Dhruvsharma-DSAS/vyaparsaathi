@@ -1,0 +1,20 @@
+{
+  "veg_momo_plate":{"name":"Veg momos (8 pcs)","items":[{"name":"Maida (flour)","grams":70,"retail_per_kg":40},{"name":"Cabbage","grams":60,"mandi":"Cabbage"},{"name":"Onion","grams":25,"mandi":"Onion"},{"name":"Carrot","grams":15,"mandi":"Carrot"},{"name":"Oil and spices","fixed":3.0},{"name":"Chutney (tomato + chilli)","fixed":3.0},{"name":"Gas share","fixed":2.5},{"name":"Plate, tissue, packing","fixed":2.5}]},
+  "masala_chai_cup":{"name":"Masala chai (1 cup)","items":[{"name":"Milk","grams":80,"retail_per_kg":60},{"name":"Tea and sugar","fixed":1.5},{"name":"Ginger, elaichi","fixed":0.5},{"name":"Gas share","fixed":0.6},{"name":"Paper cup","fixed":0.8}]},
+  "vada_pav_piece":{"name":"Vada pav (1 piece)","items":[{"name":"Pav","fixed":2.5},{"name":"Potato","grams":70,"mandi":"Potato"},{"name":"Besan and oil","fixed":2.5},{"name":"Green chilli","grams":5,"mandi":"Green Chilli"},{"name":"Chutney","fixed":0.8},{"name":"Gas share","fixed":0.6},{"name":"Paper","fixed":0.4}]},
+  "lemon_soda_glass":{"name":"Lemon soda (1 glass)","items":[{"name":"Lemon","grams":40,"mandi":"Lemon"},{"name":"Soda and sugar","fixed":5.0},{"name":"Ice","fixed":1.5},{"name":"Glass wash / cup","fixed":1.0}]},
+  "veg_thali":{"name":"Veg thali","items":[{"name":"Rice, dal, atta","fixed":18},{"name":"Onion","grams":40,"mandi":"Onion"},{"name":"Tomato","grams":50,"mandi":"Tomato"},{"name":"Seasonal sabzi","grams":120,"mandi":"Cabbage"},{"name":"Oil, spices","fixed":5},{"name":"Gas share","fixed":3},{"name":"Packing","fixed":4}]},
+  "blouse_stitch":{"name":"Blouse stitching (1)","items":[{"name":"Thread, lining, hooks","fixed":45},{"name":"Electricity share","fixed":8}]},
+  "phone_repair_job":{"name":"Phone repair (avg job)","items":[{"name":"Spare part (avg)","fixed":180},{"name":"Consumables","fixed":15}]},
+  "mango_pickle_jar":{"name":"Mango pickle (500 g jar)","items":[{"name":"Raw mango + oil + masala","fixed":55},{"name":"Jar and label","fixed":18}]},
+  "idli_breakfast_unit":{"name":"Idli breakfast cart per plate","items":[{"name":"Batter","fixed":9},{"name":"Chutney and sambar","fixed":7},{"name":"Fuel and packaging","fixed":4}]},
+  "sandwich_kiosk_unit":{"name":"Grilled sandwich kiosk per sandwich","items":[{"name":"Bread","fixed":8},{"name":"Vegetables and filling","fixed":17},{"name":"Butter and seasoning","fixed":6},{"name":"Packaging and power","fixed":5}]},
+  "filter_coffee_cart_unit":{"name":"Filter coffee cart per cup","items":[{"name":"Coffee and sugar","fixed":5},{"name":"Milk","fixed":7},{"name":"Cup and fuel","fixed":3}]},
+  "home_bakery_unit":{"name":"Home bakery per box","items":[{"name":"Flour and sugar","fixed":24},{"name":"Butter and flavouring","fixed":48},{"name":"Packaging and power","fixed":15}]},
+  "home_alterations_unit":{"name":"Home clothing alterations per job","items":[{"name":"Thread, zipper and notions","fixed":20},{"name":"Power and packing","fixed":8}]},
+  "laundry_press_unit":{"name":"Laundry ironing service per bundle","items":[{"name":"Electricity","fixed":12},{"name":"Hangers and packing","fixed":8}]},
+  "barber_chair_unit":{"name":"Single-chair barber shop per haircut","items":[{"name":"Blade and sanitation","fixed":14},{"name":"Consumables and utilities","fixed":10}]},
+  "vegetable_cart_unit":{"name":"Seasonal vegetable cart per basket","items":[{"name":"Produce purchase","fixed":65},{"name":"Expected spoilage and bags","fixed":8}]},
+  "stationery_print_unit":{"name":"Stationery and print counter per order","items":[{"name":"Paper, toner or stationery stock","fixed":29},{"name":"Electricity and packing","fixed":5}]},
+  "kirana_counter_unit":{"name":"Neighbourhood grocery counter per basket","items":[{"name":"Wholesale stock","fixed":141},{"name":"Packing and stock losses","fixed":7}]}
+}

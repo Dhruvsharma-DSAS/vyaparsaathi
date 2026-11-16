@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="A folded city map with location pins">
+  <rect width="320" height="180" rx="22" fill="#d6f2de"/>
+  <path d="M40 40l72-18 96 18 72-18v118l-72 18-96-18-72 18z" fill="#fdfefb" stroke="#15803d" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M112 22v118M208 40v118" stroke="#cfe3d3" stroke-width="3"/>
+  <path d="M52 112c30-30 60 10 92-18s58 6 90-22 30 8 36 6" fill="none" stroke="#4ade80" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 12"/>
+  <g>
+    <path d="M150 66c0-14 22-14 22 0 0 12-11 24-11 24s-11-12-11-24z" fill="#15803d"/><circle cx="161" cy="66" r="4.5" fill="#fdfefb"/>
+  </g>
+  <g>
+    <path d="M226 52c0-12 18-12 18 0 0 10-9 20-9 20s-9-10-9-20z" fill="#d97706"/><circle cx="235" cy="52" r="3.5" fill="#fdfefb"/>
+  </g>
+  <g>
+    <path d="M78 92c0-12 18-12 18 0 0 10-9 20-9 20s-9-10-9-20z" fill="#0f5e57"/><circle cx="87" cy="92" r="3.5" fill="#fdfefb"/>
+  </g>
+</svg>

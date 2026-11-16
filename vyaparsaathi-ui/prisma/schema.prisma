@@ -1,0 +1,355 @@
+// Map database for VyaparSaathi City.
+// Local development uses SQLite (prisma/map.db). To host it, switch the provider
+// to "postgresql", set DATABASE_URL and swap the adapter in lib/db.ts.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// A city the app supports, with the point the map opens on.
+model City {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  centerLat     Float
+  centerLng     Float
+  defaultZoom   Int            @default(13)
+  areas         Area[]
+  supplyMarkets SupplyMarket[]
+}
+
+/// A neighbourhood shown as a map pin. Coordinates are approximate centres, not shop locations.
+model Area {
+  id          Int            @id @default(autoincrement())
+  name        String
+  lat         Float
+  lng         Float
+  approximate Boolean        @default(true)
+  city        City           @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  cityId      Int
+  samples     MarketSample[]
+
+  @@unique([cityId, name])
+}
+
+/// A wholesale or mandi market that supplies sellers in the city.
+model SupplyMarket {
+  id      Int            @id @default(autoincrement())
+  name    String
+  lat     Float
+  lng     Float
+  city    City           @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  cityId  Int
+  samples MarketSample[]
+
+  @@unique([cityId, name])
+}
+
+/// How many similar businesses were counted in an area for one category.
+model MarketSample {
+  id                       Int           @id @default(autoincrement())
+  category                 String
+  placesFound              Int
+  population               Int
+  cityMedianPlacesPer10000 Float
+  supplyDistanceKm         Float?
+  confidence               String        @default("Sample data")
+  source                   String        @default("VyaparSaathi city guide sample")
+  area                     Area          @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  areaId                   Int
+  supplyMarket             SupplyMarket? @relation(fields: [supplyMarketId], references: [id], onDelete: SetNull)
+  supplyMarketId           Int?
+  updatedAt                DateTime      @updatedAt
+
+  @@unique([areaId, category])
+  @@index([category])
+}
+
+// ---------------------------------------------------------------------------
+// Imported datasets (from the D-vyparsathi project, see prisma/data/).
+// `city` columns hold "Bengaluru" or "Pune". Loaded by prisma/import-data.ts.
+// ---------------------------------------------------------------------------
+
+/// One mapped business or service from the OpenStreetMap snapshot (business_pois.csv, ODbL-1.0).
+model Place {
+  id              String   @id // OSM record id, e.g. node/247964964
+  city            String
+  name            String?
+  category        String
+  categoryKind    String
+  lat             Float
+  lng             Float
+  openingHours    String?
+  cuisine         String?
+  wheelchair      String?
+  osmVersion      Int
+  sourceUpdatedAt DateTime
+  retrievedAt     DateTime
+  sourceUrl       String
+  license         String
+  dataKind        String
+
+  @@index([city, category])
+  @@index([lat, lng])
+}
+
+/// One hour of historical weather for a city grid point (weather_hourly.csv, ERA5 via Open-Meteo, CC-BY-4.0).
+model WeatherHour {
+  id                  String   @id // city/timestamp
+  city                String
+  timestampLocal      String
+  timezone            String
+  lat                 Float
+  lng                 Float
+  temperatureC        Float
+  relativeHumidityPct Float
+  precipitationMm     Float
+  windSpeedKmh        Float
+  retrievedAt         DateTime
+  sourceUrl           String
+  license             String
+  dataKind            String
+
+  @@index([city, timestampLocal])
+}
+
+/// A city ward with its boundary polygon (wards.geojson) and population (ward_stats.json).
+model Ward {
+  id         String             @id // e.g. BLR-001
+  city       String
+  name       String
+  population Int
+  popSource  String?
+  areaKm2    Float
+  lat        Float
+  lng        Float
+  confidence String?
+  sources    Json?
+  geometry   Json?
+  stats      WardCategoryStat[]
+
+  @@index([city])
+}
+
+/// Businesses of one category in a ward, per 10,000 residents, and the gap against the city median.
+model WardCategoryStat {
+  id       Int    @id @default(autoincrement())
+  ward     Ward   @relation(fields: [wardId], references: [id], onDelete: Cascade)
+  wardId   String
+  category String
+  count    Int
+  per10k   Float?
+  gap      Float?
+
+  @@unique([wardId, category])
+  @@index([category])
+}
+
+/// City median of businesses per 10,000 residents, by category (ward_stats.json).
+model CategoryMedian {
+  id           Int    @id @default(autoincrement())
+  city         String
+  category     String
+  medianPer10k Float
+
+  @@unique([city, category])
+}
+
+/// A metro or busy station with a 24-hour rush curve for weekdays and weekends (rush_clock.json).
+model RushStation {
+  id      Int     @id @default(autoincrement())
+  city    String
+  name    String
+  lat     Float
+  lng     Float
+  kind    String
+  weekday Json // 24 numbers, index = hour
+  weekend Json
+  source  String?
+
+  @@unique([city, name])
+}
+
+/// A map grid cell with the number of mapped places and a landmark (bengaluru_map.json / pune_map.json).
+model DensityCell {
+  id               Int     @id @default(autoincrement())
+  city             String
+  lat              Float
+  lng              Float
+  count            Int
+  categories       Json
+  landmarkName     String?
+  landmarkCategory String?
+  landmarkUrl      String?
+
+  @@index([city])
+}
+
+/// A business idea with prices, start-up items and links to recipe, licences and schemes (business_types.json).
+model BusinessType {
+  id                 String  @id
+  name               String
+  hindi              String?
+  model              String
+  category           String
+  skills             Json
+  peak               String?
+  price              Float
+  unit               String?
+  typicalUnitsPerDay Float?
+  monthlyFixed       Float?
+  startup            Json
+  licenceIds         Json
+  schemeIds          Json
+  recipe             Recipe? @relation(fields: [recipeId], references: [id])
+  recipeId           String?
+}
+
+/// Ingredient list for one unit of a product (recipes.json).
+model Recipe {
+  id            String         @id
+  name          String
+  items         RecipeItem[]
+  businessTypes BusinessType[]
+}
+
+model RecipeItem {
+  id          Int     @id @default(autoincrement())
+  recipe      Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId    String
+  position    Int
+  name        String
+  grams       Float?
+  retailPerKg Float?
+  mandiItem   String?
+  fixedCost   Float?
+
+  @@unique([recipeId, position])
+}
+
+/// Government loan or support scheme (schemes.json).
+model Scheme {
+  id        String  @id
+  name      String
+  forModels Json
+  forText   String?
+  maxAmount Float?
+  detail    String?
+  needs     Json
+  url       String?
+  checkedOn String?
+  sourceUrl String?
+}
+
+/// Permit or registration to check (licences.json).
+model Licence {
+  id        String  @id
+  name      String
+  why       String?
+  where     String?
+  url       String?
+  time      String?
+  checkedOn String?
+  sourceUrl String?
+}
+
+/// Festival or seasonal event that changes demand (events.json). city is "Bengaluru", "Pune" or "Both".
+model CityEvent {
+  id     Int    @id @default(autoincrement())
+  name   String
+  city   String
+  month  Int
+  effect String
+
+  @@unique([name, city])
+}
+
+/// Mandi (wholesale) price in rupees per kg (mandi_today.json). period is "today" or "last_month".
+model MandiPrice {
+  id         Int     @id @default(autoincrement())
+  date       String
+  city       String
+  commodity  String
+  pricePerKg Float
+  period     String
+  sample     Boolean
+
+  @@unique([date, city, commodity, period])
+}
+
+/// Daily city news digest and its headlines (news_today.json).
+model NewsDigest {
+  id      Int        @id @default(autoincrement())
+  date    String
+  city    String
+  summary String
+  sample  Boolean
+  items   NewsItem[]
+
+  @@unique([date, city])
+}
+
+model NewsItem {
+  id       Int        @id @default(autoincrement())
+  digest   NewsDigest @relation(fields: [digestId], references: [id], onDelete: Cascade)
+  digestId Int
+  title    String
+  tag      String?
+}
+
+/// Provenance for each imported file: rows, checksum, licence and collection metadata (manifest.json, summary.json).
+model DatasetSource {
+  key         String   @id
+  file        String
+  rows        Int
+  sha256      String?
+  description String?
+  meta        Json?
+  importedAt  DateTime @default(now())
+}
+
+/// Trained model evaluation (weather_report.json).
+model ModelReport {
+  name   String @id
+  report Json
+}
+
+/// Raw boundary files kept as GeoJSON text (blr.geojson, pune_wards.geojson, pune_admin.geojson, india.geojson).
+model BoundaryFile {
+  name         String @id
+  region       String
+  featureCount Int
+  geojson      String
+}
+
+// ---------------------------------------------------------------------------
+// Accounts
+// ---------------------------------------------------------------------------
+
+/// A signed-up user. Passwords are stored only as a salted scrypt hash.
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  createdAt     DateTime  @default(now())
+  /// The user's saved plan (same shape the app keeps in browser storage).
+  plan          Json?
+  planUpdatedAt DateTime?
+  sessions      Session[]
+}
+
+/// A signed-in browser. The cookie holds a random token; only its SHA-256 hash is stored here.
+model Session {
+  id        String   @id // sha256(token)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId])
+}

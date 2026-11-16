@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="An open khata ledger with a stack of coins">
+  <rect width="320" height="180" rx="22" fill="#d6f2de"/>
+  <path d="M60 46c30-10 60-10 96 6v100c-36-16-66-16-96-6z" fill="#fdfefb" stroke="#15803d" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M252 46c-30-10-60-10-96 6v100c36-16 66-16 96-6z" fill="#fdfefb" stroke="#15803d" stroke-width="3" stroke-linejoin="round"/>
+  <g stroke="#cfe3d3" stroke-width="3" stroke-linecap="round">
+    <path d="M74 70h66M74 86h66M74 102h50M74 118h60"/>
+    <path d="M172 70h66M172 86h40M172 102h66M172 118h50"/>
+  </g>
+  <path d="M176 128l16-14 14 8 24-26" fill="none" stroke="#15803d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(250 132)">
+    <ellipse cx="0" cy="18" rx="26" ry="8" fill="#a16207"/>
+    <rect x="-26" y="2" width="52" height="16" fill="#d97706"/>
+    <ellipse cx="0" cy="2" rx="26" ry="8" fill="#fbbf24"/>
+    <rect x="-26" y="-12" width="52" height="14" fill="#d97706"/>
+    <ellipse cx="0" cy="-12" rx="26" ry="8" fill="#fde68a"/>
+    <text x="0" y="-8" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="12" fill="#a16207">₹</text>
+  </g>
+</svg>
