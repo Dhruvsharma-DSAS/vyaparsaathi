@@ -65,6 +65,11 @@ export type ExtraCopy = {
   guestTitle: string;
   guestNote: string;
   or: string;
+  thinking: string;
+  wakingUp: string;
+  retry: string;
+  sendHint: string;
+  newChat: string;
 };
 
 export const extraCopy: Record<Language, ExtraCopy> = {
@@ -132,6 +137,11 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     guestTitle: "You're using a guest session",
     guestNote: "Your plan is saved only in this browser. Sign in or create an account to keep it safe on any device.",
     or: "or",
+    thinking: "Saathi is typing…",
+    wakingUp: "Waking up the server. The first reply can take up to a minute.",
+    retry: "Try again",
+    sendHint: "Enter to send · Shift + Enter for a new line",
+    newChat: "New chat",
   },
   Hindi: {
     tagline: "छोटे व्यवसाय की योजना के लिए आपकी बाज़ार बही",
@@ -197,6 +207,11 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     guestTitle: "आप अतिथि के रूप में उपयोग कर रहे हैं",
     guestNote: "आपकी योजना केवल इसी ब्राउज़र में सेव है। हर डिवाइस पर सुरक्षित रखने के लिए साइन इन करें या खाता बनाएं।",
     or: "या",
+    thinking: "साथी लिख रहा है…",
+    wakingUp: "सर्वर चालू हो रहा है। पहला जवाब आने में एक मिनट तक लग सकता है।",
+    retry: "फिर कोशिश करें",
+    sendHint: "भेजने के लिए Enter · नई पंक्ति के लिए Shift + Enter",
+    newChat: "नई बातचीत",
   },
   Marathi: {
     tagline: "छोट्या व्यवसायाच्या नियोजनासाठी तुमची बाजार वही",
@@ -262,6 +277,11 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     guestTitle: "तुम्ही पाहुणे म्हणून वापरत आहात",
     guestNote: "तुमची योजना फक्त या ब्राउझरमध्ये जतन आहे. प्रत्येक डिव्हाइसवर सुरक्षित ठेवण्यासाठी साइन इन करा किंवा खाते तयार करा.",
     or: "किंवा",
+    thinking: "साथी लिहित आहे…",
+    wakingUp: "सर्व्हर सुरू होत आहे. पहिले उत्तर येण्यास एक मिनिटापर्यंत लागू शकते.",
+    retry: "पुन्हा प्रयत्न करा",
+    sendHint: "पाठवण्यासाठी Enter · नवीन ओळीसाठी Shift + Enter",
+    newChat: "नवीन संभाषण",
   },
   Gujarati: {
     tagline: "નાના વ્યવસાયના આયોજન માટે તમારી બજાર ખાતાવહી",
@@ -327,6 +347,11 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     guestTitle: "તમે મહેમાન તરીકે ઉપયોગ કરી રહ્યા છો",
     guestNote: "તમારી યોજના ફક્ત આ બ્રાઉઝરમાં સાચવેલી છે. દરેક ઉપકરણ પર સુરક્ષિત રાખવા સાઇન ઇન કરો અથવા ખાતું બનાવો.",
     or: "અથવા",
+    thinking: "સાથી લખી રહ્યું છે…",
+    wakingUp: "સર્વર શરૂ થઈ રહ્યું છે. પહેલો જવાબ આવતાં એક મિનિટ સુધી લાગી શકે.",
+    retry: "ફરી પ્રયાસ કરો",
+    sendHint: "મોકલવા Enter · નવી લાઇન માટે Shift + Enter",
+    newChat: "નવી વાતચીત",
   },
   Bengali: {
     tagline: "ছোট ব্যবসার পরিকল্পনার জন্য আপনার বাজারের খাতা",
@@ -392,5 +417,10 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     guestTitle: "আপনি অতিথি হিসেবে ব্যবহার করছেন",
     guestNote: "আপনার পরিকল্পনা শুধু এই ব্রাউজারে সংরক্ষিত। যেকোনো ডিভাইসে নিরাপদ রাখতে সাইন ইন করুন বা অ্যাকাউন্ট তৈরি করুন।",
     or: "অথবা",
+    thinking: "সাথী লিখছে…",
+    wakingUp: "সার্ভার চালু হচ্ছে। প্রথম উত্তর আসতে এক মিনিট পর্যন্ত লাগতে পারে।",
+    retry: "আবার চেষ্টা করুন",
+    sendHint: "পাঠাতে Enter · নতুন লাইনের জন্য Shift + Enter",
+    newChat: "নতুন কথোপকথন",
   },
 };

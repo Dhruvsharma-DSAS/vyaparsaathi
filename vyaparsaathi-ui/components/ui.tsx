@@ -13,7 +13,7 @@ export function Icon({ name, className, filled }: { name: string; className?: st
 
 export function Card({ children, className, ruled, id }: { children: ReactNode; className?: string; ruled?: boolean; id?: string }) {
   return (
-    <section id={id} className={clsx("rise rounded-2xl border border-line/60 p-4 shadow-sm", ruled ? "ledger" : "bg-surface", className)}>
+    <section id={id} className={clsx("rise rounded-3xl border border-line/70 p-5 shadow-[0_10px_30px_-18px_rgba(16,38,26,0.25)]", ruled ? "ledger" : "bg-surface", className)}>
       {children}
     </section>
   );
@@ -23,8 +23,8 @@ export function CardTitle({ icon, title, aside, sub }: { icon?: string; title: R
   return (
     <header className="mb-3">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="flex items-center gap-2 font-bold">
-          {icon && <Icon name={icon} className="text-accent" />}
+        <h2 className="flex items-center gap-2.5 font-bold">
+          {icon && <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent"><Icon name={icon} className="text-[20px]" /></span>}
           {title}
         </h2>
         {aside}
@@ -38,7 +38,7 @@ export function PageHeader({ eyebrow, title, sub }: { eyebrow?: string; title: s
   return (
     <header>
       {eyebrow && <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent">{eyebrow}</p>}
-      <h1 className="text-2xl font-bold">{title}</h1>
+      <h1 className="text-[26px] font-extrabold leading-tight tracking-tight">{title}</h1>
       {sub && <p className="mt-2 text-sm text-muted">{sub}</p>}
     </header>
   );
@@ -52,8 +52,8 @@ export function Button({ variant = "primary", icon, block, className, children, 
       type="button"
       {...props}
       className={clsx(
-        "inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-bold transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50",
-        variant === "primary" && "bg-accent text-accent-ink hover:opacity-90",
+        "inline-flex items-center justify-center gap-1.5 rounded-2xl px-4 py-2.5 text-sm font-bold transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50",
+        variant === "primary" && "brand-gradient text-white shadow-md shadow-accent/25 hover:brightness-105",
         variant === "indigo" && "bg-indigo text-surface hover:opacity-90",
         variant === "outline" && "border border-accent px-3 py-2 font-semibold text-accent hover:bg-accent-soft",
         variant === "ghost" && "font-semibold text-muted hover:bg-surface-2",
@@ -89,7 +89,7 @@ export function Field({ label, value, onChange, type = "number", min = "0", plac
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm font-normal text-ink outline-none focus:border-accent"
+        className="mt-1.5 w-full rounded-2xl border border-line bg-surface-2/40 px-3.5 py-3 text-sm font-normal text-ink outline-none transition focus:border-accent focus:bg-surface focus:ring-4 focus:ring-accent/10"
       />
     </label>
   );
@@ -106,7 +106,7 @@ export function SelectField({ id, label, value, onChange, options, placeholder }
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-ink outline-none focus:border-accent"
+        className="w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-ink outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/10"
       >
         {placeholder !== undefined && <option value="">{placeholder}</option>}
         {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -122,7 +122,7 @@ export function StatGrid({ stats }: { stats: Stat[] }) {
     <dl className="grid grid-cols-2 gap-3 text-sm">
       {stats.map((stat) => (
         <div key={stat.label} className={clsx(
-          "rounded-xl p-3",
+          "rounded-2xl p-3.5",
           stat.wide && "col-span-2",
           stat.tone === "accent" ? "bg-accent-soft" : stat.tone === "ok" ? "bg-ok-soft" : stat.tone === "bad" ? "bg-bad-soft" : "bg-surface-2/70",
         )}>
@@ -150,7 +150,7 @@ export function Rows({ rows }: { rows: Array<{ label: string; value: ReactNode; 
 export function Notice({ tone = "warn", children, className }: { tone?: "warn" | "bad" | "info" | "ok"; children: ReactNode; className?: string }) {
   return (
     <p role={tone === "bad" ? "alert" : undefined} className={clsx(
-      "rounded-xl p-3 text-xs leading-relaxed",
+      "rounded-2xl p-3.5 text-xs leading-relaxed",
       tone === "warn" && "bg-warn-soft text-warn",
       tone === "bad" && "bg-bad-soft text-sm text-bad",
       tone === "info" && "bg-surface-2/70 text-muted",
@@ -186,16 +186,16 @@ export function SectionTabs<T extends string>({ tabs, value, onChange }: {
 }) {
   const group = useId();
   return (
-    <div className="no-print mt-4 grid gap-2 rounded-xl bg-surface-2/70 p-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+    <div className="no-print mt-4 grid gap-1 rounded-full border border-line/70 bg-surface-2/70 p-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
       {tabs.map((tab) => (
         <button
           key={tab.id}
           type="button"
           aria-pressed={value === tab.id}
           onClick={() => onChange(tab.id)}
-          className={clsx("relative isolate rounded-lg px-3 py-2 text-sm font-semibold transition-colors", value === tab.id ? "text-accent" : "text-muted hover:text-ink")}
+          className={clsx("relative isolate rounded-full px-3 py-2 text-sm font-semibold transition-colors", value === tab.id ? "text-accent" : "text-muted hover:text-ink")}
         >
-          {value === tab.id && <motion.span layoutId={`tab-${group}`} className="absolute inset-0 -z-10 rounded-lg bg-surface shadow-sm" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
+          {value === tab.id && <motion.span layoutId={`tab-${group}`} className="absolute inset-0 -z-10 rounded-full bg-surface shadow-sm" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
           {tab.label}
         </button>
       ))}

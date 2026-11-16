@@ -100,6 +100,7 @@ type AppContextValue = Persisted & Setters & {
   updateProfile: (patch: Partial<VyaparState["user_profile"]>) => void;
   progress: { filled: number; percent: number };
   resetAll: () => Promise<void>;
+  newChat: () => void;
   syncState: "idle" | "saving" | "saved" | "error";
   exportData: () => string;
 };
@@ -145,11 +146,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(storageKey);
-      const preferredDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-      if (!raw) {
-        setThemeState(preferredDark ? "dark" : "light");
-        return;
-      }
+      // Light mode is the default; dark mode only when the user picked it.
+      if (!raw) return;
       const saved = JSON.parse(raw) as Partial<Persisted> & {
         language?: string; activeScreen?: string; exploreTab?: ExploreTab; theme?: Theme;
       };
@@ -157,7 +155,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const initial = createInitialState(lang);
       const profile = saved.vyaparState?.user_profile;
       setLanguage(lang);
-      setThemeState(saved.theme ?? (preferredDark ? "dark" : "light"));
+      setThemeState(saved.theme === "dark" ? "dark" : "light");
       setVyaparState({
         ...initial,
         ...saved.vyaparState,
@@ -177,7 +175,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (restoredScreen && screens.includes(restoredScreen as Screen)) setScreen(restoredScreen as Screen);
       if (saved.activeScreen === "time") setExploreTab("time");
       else if (saved.exploreTab === "market" || saved.exploreTab === "time") setExploreTab(saved.exploreTab);
-      if (saved.messages?.length) setMessages(saved.messages);
+      // Every visit starts a fresh chat (the plan and profile are kept).
+      setMessages([{ role: "ai", text: copy[lang].greeting, time: "" }]);
       if (saved.financeInputs) setFinanceInputs({ ...initialFinance, ...saved.financeInputs });
       if (saved.financeResult) setFinanceResult(saved.financeResult);
       if (saved.supplierQuotes) setSupplierQuotes(saved.supplierQuotes);
@@ -203,10 +202,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const snapshot = useMemo(() => ({
-    language, activeScreen: screen, exploreTab, theme, messages, vyaparState, financeInputs, financeResult,
+    language, activeScreen: screen, exploreTab, theme, vyaparState, financeInputs, financeResult,
     supplierQuotes, completedLicences, groundInputs, priceChecks, footfallResult, rentBurdenResult,
     pilotInputs, pilotResult,
-  }), [language, screen, exploreTab, theme, messages, vyaparState, financeInputs, financeResult, supplierQuotes,
+  }), [language, screen, exploreTab, theme, vyaparState, financeInputs, financeResult, supplierQuotes,
     completedLicences, groundInputs, priceChecks, footfallResult, rentBurdenResult, pilotInputs, pilotResult]);
 
   useEffect(() => {
@@ -273,20 +272,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMessages([{ role: "ai", text: copy[next].greeting, time: "" }]);
       return;
     }
+    // Swap the built-in greeting right away; the rest is translated by the API.
+    const withGreeting = messages.map((message) =>
+      message.role === "ai" && message.text === copy[previous].greeting ? { ...message, text: copy[next].greeting } : message);
+    setMessages(withGreeting);
     try {
       const { chat_history: translated } = await api.translateChat(messages, next);
       if (!Array.isArray(translated) || translated.length !== messages.length ||
         translated.some((message) => typeof message.text !== "string" || !message.text.trim())) {
         throw new Error("Incomplete translation");
       }
-      setMessages(translated);
-      setTranscriptCache((cache) => ({ ...cache, [next]: translated }));
+      const merged = messages.map((message, index) => ({ ...message, text: translated[index].text }));
+      setMessages(merged);
+      setTranscriptCache((cache) => ({ ...cache, [next]: merged }));
     } catch {
-      setLanguage(previous);
-      updateProfile({ language: previous });
-      setLanguageError(copy[previous].translationError);
+      // Keep the new language; older messages simply stay as they were written.
     }
   }, [language, messages, transcriptCache, updateProfile]);
+
+  const newChat = useCallback(() => {
+    setTranscriptCache({});
+    setMessages([{ role: "ai", text: copy[language].greeting, time: "" }]);
+  }, [language]);
 
   const progress = useMemo(() => {
     const { user_profile: profile, business_context: business } = vyaparState;
@@ -314,7 +321,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value: AppContextValue = {
     copy: getCopy(language), language, changeLanguage, languageError,
     screen, navigate, exploreTab, setExploreTab, theme, setTheme: setThemeState,
-    isOnline, hydrated, setCity, updateProfile, progress, resetAll, exportData, syncState,
+    isOnline, hydrated, setCity, updateProfile, progress, resetAll, exportData, syncState, newChat,
     messages, setMessages, vyaparState, setVyaparState, financeInputs, setFinanceInputs,
     financeResult, setFinanceResult, supplierQuotes, setSupplierQuotes, completedLicences, setCompletedLicences,
     groundInputs, setGroundInputs, priceChecks, setPriceChecks, footfallResult, setFootfallResult,

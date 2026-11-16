@@ -262,8 +262,71 @@ def _is_translation_error(text: str) -> bool:
     return any(marker in normalized for marker in error_markers)
 
 
+TRANSLATE_PROMPT = """Translate each string in this JSON array into {language}.
+Keep the meaning, tone, numbers, rupee amounts, names and place names. Do not add or drop items.
+Return ONLY a JSON array of strings with exactly {count} items, in the same order.
+
+{items}
+"""
+
+
+def _parse_translation(text: str, count: int) -> list[str]:
+    content = text.strip()
+    if content.startswith("```"):
+        content = content.split("\n", 1)[1] if "\n" in content else content[3:]
+        content = content.rsplit("```", 1)[0]
+    start, end = content.find("["), content.rfind("]")
+    if start == -1 or end == -1:
+        raise ValueError("No JSON array in translation response")
+    items = json.loads(content[start:end + 1])
+    if not isinstance(items, list) or len(items) != count or not all(isinstance(item, str) and item.strip() for item in items):
+        raise ValueError("Translation response has the wrong shape")
+    return items
+
+
+async def _translate_with_ai(texts: list[str], language: str) -> list[str] | None:
+    """One request for the whole transcript through Gemini/Groq; None if no provider manages it."""
+    if not providers:
+        return None
+    text, provider = await invoke_with_fallback("extract", TRANSLATE_PROMPT, {
+        "language": language,
+        "count": len(texts),
+        "items": json.dumps(texts, ensure_ascii=False),
+    })
+    if not text:
+        return None
+    try:
+        return _parse_translation(text, len(texts))
+    except (ValueError, json.JSONDecodeError) as error:
+        print(f"{provider} translation was not usable: {error}")
+        return None
+
+
+async def _translate_with_google(texts: list[str], target: str) -> list[str]:
+    """Fallback: the free Google Translate web endpoint (often rate-limited on cloud hosts)."""
+    def translate_text(text: str) -> str:
+        if not text.strip():
+            return text
+        translated = GoogleTranslator(source="auto", target=target).translate(text)
+        if not isinstance(translated, str) or _is_translation_error(translated):
+            raise RuntimeError("Translation provider returned an error response")
+        return translated
+
+    results = []
+    for text in texts:
+        for attempt in range(3):
+            try:
+                results.append(await asyncio.to_thread(translate_text, text))
+                break
+            except Exception as error:
+                if attempt == 2:
+                    raise RuntimeError("Unable to translate the conversation") from error
+                await asyncio.sleep(0.5 * (attempt + 1))
+    return results
+
+
 async def translate_chat_history(chat_history: list, language: str) -> list:
-    """Translate the displayed transcript without using Gemini."""
+    """Translate the displayed transcript: AI providers first, Google Translate as a fallback."""
     if not chat_history:
         return []
 
@@ -275,26 +338,9 @@ async def translate_chat_history(chat_history: list, language: str) -> list:
         "Bengali": "bn",
     }
     target = language_codes.get(language, "en")
+    texts = [str(message.get("text", "")) for message in chat_history]
 
-    def translate_text(text: str) -> str:
-        if not text.strip():
-            return text
-        translated = GoogleTranslator(source="auto", target=target).translate(text)
-        if not isinstance(translated, str) or _is_translation_error(translated):
-            raise RuntimeError("Translation provider returned an error response")
-        return translated
-
-    translated_history = []
-    for message in chat_history:
-        text = message.get("text", "")
-        translated_text = text
-        for attempt in range(3):
-            try:
-                translated_text = await asyncio.to_thread(translate_text, text)
-                break
-            except Exception as error:
-                if attempt == 2:
-                    raise RuntimeError("Unable to translate the conversation") from error
-                await asyncio.sleep(0.5 * (attempt + 1))
-        translated_history.append({**message, "text": translated_text})
-    return translated_history
+    translated = await _translate_with_ai(texts, language)
+    if translated is None:
+        translated = await _translate_with_google(texts, target)
+    return [{**message, "text": text} for message, text in zip(chat_history, translated)]

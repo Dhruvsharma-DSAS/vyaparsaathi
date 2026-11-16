@@ -16,9 +16,14 @@ import type {
   WeatherResult,
 } from "./types";
 
-export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+/**
+ * All calls go to this site's own /api/backend proxy (app/api/backend/[...path]/route.ts),
+ * which forwards them to the Python API. No CORS setup and no rebuild when the API URL changes.
+ */
+export const apiBaseUrl = "/api/backend";
 
-const http = axios.create({ baseURL: apiBaseUrl, timeout: 30000 });
+// Generous timeout: a sleeping free Render instance can take about a minute to wake up.
+const http = axios.create({ baseURL: apiBaseUrl, timeout: 110000 });
 
 const get = <T>(path: string, params?: Record<string, unknown>) => http.get<T>(path, { params }).then((r) => r.data);
 const post = <T>(path: string, body: unknown) => http.post<T>(path, body).then((r) => r.data);
@@ -51,3 +56,6 @@ export const api = {
 };
 
 export const isRateLimited = (error: unknown) => axios.isAxiosError(error) && error.response?.status === 429;
+
+/** Wakes a sleeping API early (e.g. when the chat opens) so the first real request is fast. */
+export const warmUpApi = () => http.get("/health", { timeout: 110000 }).then(() => true).catch(() => false);

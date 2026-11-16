@@ -12,6 +12,8 @@ export type ChatMessage = {
   role: "ai" | "user";
   text: string;
   time: string;
+  /** Set on an AI bubble that reports a failed request; it is not sent back to the API as history. */
+  failed?: boolean;
 };
 
 export type UserProfile = {

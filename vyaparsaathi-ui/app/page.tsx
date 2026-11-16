@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, MotionConfig, motion } from "framer-motion";
+import { MotionConfig, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { AdvisorScreen } from "@/components/screens/AdvisorScreen";
@@ -41,24 +41,16 @@ function CurrentScreen() {
     return <div className="h-64 animate-pulse rounded-3xl bg-surface-2" role="status" aria-label="Loading" />;
   }
   const ScreenComponent = screens[screen];
+  // Enter-only transition: the new screen mounts at once, so it can never wait on an exit animation.
   return (
-    <AnimatePresence mode="wait" initial={false} custom={direction}>
-      <motion.div
-        key={screen}
-        custom={direction}
-        variants={{
-          enter: (dir: number) => ({ opacity: 0, x: 24 * dir }),
-          center: { opacity: 1, x: 0 },
-          exit: (dir: number) => ({ opacity: 0, x: -16 * dir }),
-        }}
-        initial="enter"
-        animate="center"
-        exit="exit"
-        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <ScreenComponent />
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      key={screen}
+      initial={{ opacity: 0, x: 18 * direction }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <ScreenComponent />
+    </motion.div>
   );
 }
 

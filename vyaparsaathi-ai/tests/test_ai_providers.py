@@ -62,3 +62,29 @@ def test_chat_still_answers_without_any_key():
         assert result["response_text"]
     finally:
         agent.providers = original
+
+
+def test_translation_uses_ai_and_keeps_order():
+    import json as _json
+
+    class Translator(FakeProvider):
+        async def invoke(self, role, template, variables):
+            self.calls += 1
+            items = _json.loads(variables["items"])
+            return SimpleNamespace(content="```json\n" + _json.dumps([f"HI:{item}" for item in items]) + "\n```")
+
+    original = agent.providers
+    agent.providers = [Translator("groq")]
+    try:
+        history = [{"role": "ai", "text": "Hello", "time": ""}, {"role": "user", "text": "50000 rupees", "time": "1"}]
+        result = asyncio.run(agent.translate_chat_history(history, "Hindi"))
+        assert [item["text"] for item in result] == ["HI:Hello", "HI:50000 rupees"]
+        assert result[1]["time"] == "1"
+    finally:
+        agent.providers = original
+
+
+def test_translation_rejects_wrong_length():
+    import pytest
+    with pytest.raises(ValueError):
+        agent._parse_translation('["only one"]', 2)

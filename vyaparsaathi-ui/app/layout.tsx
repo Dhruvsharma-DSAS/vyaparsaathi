@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 };
 
 // Applies the saved (or system) theme before first paint so there is no flash.
-const themeScript = `try{var s=JSON.parse(localStorage.getItem("vyaparsaathi-city")||"{}");var t=s.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}catch(e){}`;
+const themeScript = `try{var s=JSON.parse(localStorage.getItem("vyaparsaathi-city")||"{}");var t=s.theme==="dark"?"dark":"light";document.documentElement.dataset.theme=t}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
