@@ -24,10 +24,11 @@ async function fromDatabase(city: City): Promise<MapPayload | null> {
   if (!row) return null;
   const [wards, density, stations, placeCategories] = await Promise.all([
     prisma.ward.findMany({ where: { city }, include: { stats: true }, orderBy: { id: "asc" } }),
-    prisma.densityCell.findMany({ where: { city }, select: { lat: true, lng: true, count: true, landmarkName: true } }),
+    prisma.densityCell.findMany({ where: { city }, select: { lat: true, lng: true, count: true, landmarkName: true, categories: true } }),
     prisma.rushStation.findMany({ where: { city }, orderBy: { name: "asc" } }),
-    prisma.place.groupBy({ by: ["category"], where: { city }, _count: { _all: true }, orderBy: { _count: { category: "desc" } }, take: 12 }),
+    prisma.place.groupBy({ by: ["category"], where: { city }, _count: { _all: true }, orderBy: { _count: { category: "desc" } } }),
   ]);
+  const snapshot = await prisma.place.findFirst({ where: { city }, select: { retrievedAt: true }, orderBy: { retrievedAt: "desc" } });
   return {
     city,
     center: [row.centerLat, row.centerLng],
@@ -57,13 +58,18 @@ async function fromDatabase(city: City): Promise<MapPayload | null> {
         topGap: best ? { category: best.category, gap: best.gap ?? 0 } : null,
       };
     }),
-    density: density.map((cell) => ({ lat: cell.lat, lng: cell.lng, count: cell.count, landmark: cell.landmarkName })),
+    density: density.map((cell) => ({
+      lat: cell.lat, lng: cell.lng, count: cell.count, landmark: cell.landmarkName,
+      categories: (cell.categories ?? {}) as Record<string, number>,
+    })),
     stations: stations.map((station): MapStation => {
       const curve = station.weekday as number[];
       const peakValue = Math.max(...curve);
       return { name: station.name, lat: station.lat, lng: station.lng, kind: station.kind, peakHour: curve.indexOf(peakValue), peakValue };
     }),
     placeCategories: placeCategories.map((item) => ({ category: item.category, count: item._count._all })),
+    totalPlaces: placeCategories.reduce((sum, item) => sum + item._count._all, 0),
+    snapshotDate: snapshot?.retrievedAt.toISOString() ?? null,
   };
 }
 
@@ -81,6 +87,8 @@ function fromSeed(city: City): MapPayload | null {
     density: [],
     stations: [],
     placeCategories: [],
+    totalPlaces: 0,
+    snapshotDate: null,
     areas: seed.areas.map((area) => ({
       ...area,
       approximate: true,

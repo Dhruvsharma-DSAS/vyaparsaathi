@@ -93,7 +93,7 @@ export type MapLayerId = "areas" | "wards" | "density" | "stations" | "places";
 export const mapLayers: Array<{ id: MapLayerId; icon: string; label: string; defaultOn: boolean }> = [
   { id: "areas", icon: "pin_drop", label: "Market areas", defaultOn: true },
   { id: "wards", icon: "grid_view", label: "Ward boundaries", defaultOn: false },
-  { id: "density", icon: "blur_on", label: "Business density", defaultOn: true },
+  { id: "density", icon: "blur_on", label: "Business density", defaultOn: false },
   { id: "stations", icon: "train", label: "Rush stations", defaultOn: false },
-  { id: "places", icon: "storefront", label: "Places", defaultOn: false },
+  { id: "places", icon: "storefront", label: "All places", defaultOn: true },
 ];

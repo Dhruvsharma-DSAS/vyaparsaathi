@@ -58,7 +58,16 @@ npm run db:setup
 
 `npm run db:seed` reloads every dataset; it is safe to run again. `npm run db:studio` opens a table browser.
 
-API routes: `GET /api/map?city=Bengaluru` (areas, wards, density, stations, place categories), `GET /api/places?city=Pune&category=cafe`, `GET /api/data` (row counts). If the database is unreachable, `/api/map` falls back to the seed pins so the map still loads. Hosting steps for Vercel, Render and Prisma Postgres are in [DEPLOY.md](../DEPLOY.md).
+### Refreshing the map data from the internet
+
+```bash
+npm run data:fetch   # downloads a fresh OpenStreetMap snapshot into prisma/data/real/business_pois.csv
+npm run db:seed      # loads it into the database (density grid is rebuilt from the places)
+```
+
+The fetch uses the public Overpass API (same source as the original collector) for every shop plus restaurants, cafés, food courts, banks, ATMs, schools, colleges, hospitals, clinics, pharmacies, markets, fuel, cinemas, hotels, craft workshops (tailors, carpenters…), offices and metro/rail/bus stations in the Bengaluru and Pune areas. It retries across several public servers and refuses to replace the file if fewer than 10,000 places come back. Data © OpenStreetMap contributors, ODbL-1.0.
+
+API routes: `GET /api/map?city=Bengaluru` (areas, wards, density, stations, every place category with counts), `GET /api/places?city=Pune&filter=group:food&bbox=south,west,north,east` (places in the visible map area), `GET /api/data` (row counts). If the database is unreachable, `/api/map` falls back to the seed pins so the map still loads. Hosting steps for Vercel, Render and Prisma Postgres are in [DEPLOY.md](../DEPLOY.md).
 
 ## Accounts
 

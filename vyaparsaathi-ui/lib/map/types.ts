@@ -25,11 +25,14 @@ export type MapWard = {
   topGap: { category: string; gap: number } | null;
 };
 
-export type MapDensityCell = { lat: number; lng: number; count: number; landmark: string | null };
+export type MapDensityCell = { lat: number; lng: number; count: number; landmark: string | null; categories: Record<string, number> };
 
 export type MapStation = { name: string; lat: number; lng: number; kind: string; peakHour: number; peakValue: number };
 
-export type MapPlace = { id: string; name: string | null; category: string; lat: number; lng: number };
+export type MapPlace = {
+  id: string; name: string | null; category: string; lat: number; lng: number;
+  openingHours?: string | null; cuisine?: string | null; sourceUrl?: string;
+};
 
 export type MapPayload = {
   city: City;
@@ -41,5 +44,7 @@ export type MapPayload = {
   density: MapDensityCell[];
   stations: MapStation[];
   placeCategories: Array<{ category: string; count: number }>;
+  totalPlaces: number;
+  snapshotDate: string | null;
   source: "database" | "seed-fallback";
 };

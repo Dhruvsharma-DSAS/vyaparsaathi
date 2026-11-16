@@ -5,6 +5,7 @@ import L from "leaflet";
 import { useEffect, useRef } from "react";
 import type { MapLayerId } from "@/lib/config";
 import { gapColours } from "@/lib/map/gap";
+import { categoryLabel, colourFor } from "@/lib/map/groups";
 import type { MapPayload, MapPlace } from "@/lib/map/types";
 
 type Props = {
@@ -14,6 +15,10 @@ type Props = {
   selected: string | null;
   onSelect: (area: string) => void;
   labels: { sample: string; noSample: string; supply: string };
+  /** Called with "south,west,north,east" whenever the visible area settles. */
+  onViewChange?: (bbox: string) => void;
+  /** Fly to this point (e.g. an opportunity area picked from the list). */
+  focus?: { lat: number; lng: number; key: string } | null;
 };
 
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
@@ -21,12 +26,14 @@ const hour = (h: number) => `${String(h).padStart(2, "0")}:00`;
 const drawOrder: MapLayerId[] = ["wards", "density", "places", "stations", "areas"];
 
 /** Plain Leaflet on OpenStreetMap tiles. Each layer is redrawn from the Prisma-backed payload. */
-export default function LeafletMap({ data, layers, places, selected, onSelect, labels }: Props) {
+export default function LeafletMap({ data, layers, places, selected, onSelect, labels, onViewChange, focus }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const groupsRef = useRef<Record<MapLayerId, L.LayerGroup> | null>(null);
   const markersRef = useRef<Map<string, L.CircleMarker>>(new Map());
   const fittedCity = useRef<string | null>(null);
+  const viewChange = useRef(onViewChange);
+  useEffect(() => { viewChange.current = onViewChange; }, [onViewChange]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -36,8 +43,20 @@ export default function LeafletMap({ data, layers, places, selected, onSelect, l
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
     mapRef.current = map;
+    let timer: number | undefined;
+    const report = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (mapRef.current !== map) return; // map was removed meanwhile
+        const b = map.getBounds();
+        viewChange.current?.([b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map((n) => n.toFixed(4)).join(","));
+      }, 250);
+    };
+    map.on("moveend", report);
     groupsRef.current = { wards: L.layerGroup(), density: L.layerGroup(), places: L.layerGroup(), stations: L.layerGroup(), areas: L.layerGroup() };
     return () => {
+      window.clearTimeout(timer);
+      map.off("moveend", report);
       map.remove();
       mapRef.current = null;
       groupsRef.current = null;
@@ -102,6 +121,7 @@ export default function LeafletMap({ data, layers, places, selected, onSelect, l
       const points = [...data.areas, ...data.supplyMarkets].map((point) => L.latLng(point.lat, point.lng));
       if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [36, 36] });
       else map.setView(data.center, data.zoom);
+      map.fire("moveend");
     }
   }, [data, labels, onSelect]);
 
@@ -110,8 +130,17 @@ export default function LeafletMap({ data, layers, places, selected, onSelect, l
     if (!group) return;
     group.clearLayers();
     places.forEach((place) => {
-      L.circleMarker([place.lat, place.lng], { radius: 4, color: "#fff", weight: 1, fillColor: "#d97706", fillOpacity: 0.9 })
-        .bindTooltip(escapeHtml(place.name ?? place.category))
+      const details = [
+        `<strong>${escapeHtml(place.name || categoryLabel(place.category))}</strong>`,
+        escapeHtml(categoryLabel(place.category)),
+        place.cuisine ? `Cuisine: ${escapeHtml(place.cuisine.replaceAll(";", ", "))}` : "",
+        place.openingHours ? `Hours: ${escapeHtml(place.openingHours)}` : "",
+        place.sourceUrl?.startsWith("https://www.openstreetmap.org/")
+          ? `<a href="${escapeHtml(place.sourceUrl)}" target="_blank" rel="noopener noreferrer">View on OpenStreetMap</a>` : "",
+      ].filter(Boolean).join("<br/>");
+      L.circleMarker([place.lat, place.lng], { radius: 4.5, color: "#fff", weight: 1, fillColor: colourFor(place.category), fillOpacity: 0.92 })
+        .bindTooltip(escapeHtml(place.name || categoryLabel(place.category)))
+        .bindPopup(details)
         .addTo(group);
     });
   }, [places]);
@@ -126,6 +155,10 @@ export default function LeafletMap({ data, layers, places, selected, onSelect, l
       if (layers[id]) groups[id].addTo(map);
     });
   }, [layers, data, places]);
+
+  useEffect(() => {
+    if (focus && mapRef.current) mapRef.current.flyTo([focus.lat, focus.lng], 15, { duration: 0.8 });
+  }, [focus]);
 
   useEffect(() => {
     markersRef.current.forEach((marker, name) => marker.setStyle({ weight: name === selected ? 5 : 2, color: name === selected ? "#142019" : "#fff" }));

@@ -69,7 +69,7 @@ async function importPlaces(prisma: PrismaClient) {
   }));
   await prisma.place.deleteMany();
   await inBatches(data, 2000, (batch) => prisma.place.createMany({ data: batch }));
-  return { file, rows: data.length, sha256: createHash("sha256").update(text).digest("hex") };
+  return { file, rows: data.length, sha256: createHash("sha256").update(text).digest("hex"), data };
 }
 
 async function importWeather(prisma: PrismaClient) {
@@ -151,18 +151,38 @@ async function importRush(prisma: PrismaClient) {
   return data.length;
 }
 
-type CityMapFile = {
-  density: Array<{ lat: number; lng: number; count: number; categories: Record<string, number>; landmark?: { name?: string; category?: string; source_url?: string } }>;
-};
+const ANCHOR_CATEGORIES = ["school", "college", "university", "hospital"];
 
-async function importDensity(prisma: PrismaClient) {
+/**
+ * 0.01° grid (~1.1 km) of mapped places with per-category counts and a named landmark,
+ * built from the places themselves (same rules as D-vyparsathi's build_data_preview.py).
+ */
+export function buildDensityCells(places: Array<Pick<Prisma.PlaceCreateManyInput, "city" | "lat" | "lng" | "category" | "name" | "sourceUrl">>) {
+  const cells = new Map<string, Prisma.DensityCellCreateManyInput & { categories: Record<string, number> }>();
+  for (const place of places) {
+    const latKey = Math.floor(place.lat * 100);
+    const lngKey = Math.floor(place.lng * 100);
+    const key = `${place.city}|${latKey}|${lngKey}`;
+    let cell = cells.get(key);
+    if (!cell) {
+      cell = { city: place.city, lat: latKey / 100 + 0.005, lng: lngKey / 100 + 0.005, count: 0, categories: {}, landmarkName: null, landmarkCategory: null, landmarkUrl: null };
+      cells.set(key, cell);
+    }
+    cell.count += 1;
+    cell.categories[place.category] = (cell.categories[place.category] ?? 0) + 1;
+    const preferAnchor = ANCHOR_CATEGORIES.includes(place.category) && !ANCHOR_CATEGORIES.includes(cell.landmarkCategory ?? "");
+    if (place.name && (!cell.landmarkName || preferAnchor)) {
+      cell.landmarkName = place.name;
+      cell.landmarkCategory = place.category;
+      cell.landmarkUrl = place.sourceUrl;
+    }
+  }
+  return [...cells.values()];
+}
+
+async function importDensity(prisma: PrismaClient, places: Prisma.PlaceCreateManyInput[]) {
   await prisma.densityCell.deleteMany();
-  const data = (Object.keys(cityKeys) as CityKey[]).flatMap((key) =>
-    json<CityMapFile>(`real/${key}_map.json`).density.map((cell) => ({
-      city: cityKeys[key], lat: cell.lat, lng: cell.lng, count: cell.count, categories: cell.categories,
-      landmarkName: cell.landmark?.name ?? null, landmarkCategory: cell.landmark?.category ?? null,
-      landmarkUrl: cell.landmark?.source_url ?? null,
-    })));
+  const data = buildDensityCells(places);
   await inBatches(data, 1000, (batch) => prisma.densityCell.createMany({ data: batch }));
   return data.length;
 }
@@ -280,7 +300,7 @@ export async function importAll(prisma: PrismaClient) {
   const weather = await importWeather(prisma);
   const wards = await importWards(prisma);
   const rush = await importRush(prisma);
-  const density = await importDensity(prisma);
+  const density = await importDensity(prisma, places.data);
   const catalogue = await importCatalogue(prisma);
   const daily = await importDaily(prisma);
   const boundaries = await importBoundaries(prisma);
@@ -295,7 +315,7 @@ export async function importAll(prisma: PrismaClient) {
       { key: "weather", file: weather.file, rows: weather.rows, sha256: weather.sha256, description: "ERA5 hourly weather via Open-Meteo (CC-BY-4.0)", meta: manifest.datasets.weather as Prisma.InputJsonValue },
       { key: "wards", file: "city/*/ward_stats.json + wards.geojson", rows: wards, description: "Ward population, boundaries and category counts" },
       { key: "rush", file: "city/*/rush_clock.json", rows: rush, description: "Station rush curves (sample shapes)" },
-      { key: "density", file: "real/*_map.json", rows: density, description: "Map density grid from the places snapshot" },
+      { key: "density", file: "real/business_pois.csv", rows: density, description: "0.01° density grid built from the places snapshot" },
       { key: "catalogue", file: "common/*.json", rows: catalogue.businesses, description: "Business types, recipes, schemes, licences and events", meta: catalogue },
       { key: "daily", file: "daily/*.json", rows: daily.prices + daily.headlines, description: "Sample mandi prices and news digest", meta: daily },
       { key: "boundaries", file: "raw/*.geojson", rows: boundaries, description: "Raw boundary GeoJSON files" },
