@@ -16,5 +16,9 @@ services:
         value: "3.13.6"
       - key: GOOGLE_API_KEY
         sync: false # you are asked for the value when the Blueprint is created
+      - key: GROQ_API_KEY
+        sync: false # from https://console.groq.com/keys
+      - key: LLM_PROVIDER
+        value: gemini # "groq" to try Groq first
       - key: CORS_ORIGINS
         sync: false # e.g. https://your-app.vercel.app

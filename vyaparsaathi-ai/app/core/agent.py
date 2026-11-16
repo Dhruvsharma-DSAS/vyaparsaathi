@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from deep_translator import GoogleTranslator
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 
 from app.core.chat_profile import localized_question, next_profile_field, rule_based_extraction
 from app.models.state import VyaparState
@@ -17,25 +18,11 @@ from app.models.state import VyaparState
 env_path = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(env_path, override=True)
 google_api_key = os.getenv("GOOGLE_API_KEY")
-
-extractor = (
-    ChatGoogleGenerativeAI(
-        model="gemini-3.6-flash",
-        temperature=0.0,
-        google_api_key=google_api_key,
-    )
-    if google_api_key
-    else None
-)
-speaker = (
-    ChatGoogleGenerativeAI(
-        model="gemini-3.6-flash",
-        temperature=0.4,
-        google_api_key=google_api_key,
-    )
-    if google_api_key
-    else None
-)
+groq_api_key = os.getenv("GROQ_API_KEY")
+gemini_model = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+# "gemini" (default): try Gemini first, then Groq. "groq": try Groq first, then Gemini.
+preferred_provider = os.getenv("LLM_PROVIDER", "gemini").strip().lower()
 
 
 class GeminiRateLimiter:
@@ -70,7 +57,56 @@ class GeminiRateLimiter:
                 await asyncio.sleep(max(0.2, wait_seconds))
 
 
-gemini_rate_limiter = GeminiRateLimiter()
+class Provider:
+    """One chat model provider with a model for extraction and one for replies."""
+
+    def __init__(self, name: str, extractor, speaker, limiter=None):
+        self.name = name
+        self.extractor = extractor
+        self.speaker = speaker
+        self.limiter = limiter
+
+    async def invoke(self, role: str, template: str, variables: dict):
+        model = self.extractor if role == "extract" else self.speaker
+        if self.limiter is not None:
+            await self.limiter.wait_for_slot()
+        chain = ChatPromptTemplate.from_template(template) | model
+        return await chain.ainvoke(variables)
+
+
+def build_providers() -> list[Provider]:
+    providers: dict[str, Provider] = {}
+    if google_api_key:
+        providers["gemini"] = Provider(
+            "gemini",
+            ChatGoogleGenerativeAI(model=gemini_model, temperature=0.0, google_api_key=google_api_key),
+            ChatGoogleGenerativeAI(model=gemini_model, temperature=0.4, google_api_key=google_api_key),
+            GeminiRateLimiter(),
+        )
+    if groq_api_key:
+        providers["groq"] = Provider(
+            "groq",
+            ChatGroq(model=groq_model, temperature=0.0, api_key=groq_api_key, max_retries=1, timeout=30),
+            ChatGroq(model=groq_model, temperature=0.4, api_key=groq_api_key, max_retries=1, timeout=30),
+        )
+    order = ["groq", "gemini"] if preferred_provider == "groq" else ["gemini", "groq"]
+    return [providers[name] for name in order if name in providers]
+
+
+providers = build_providers()
+
+
+async def invoke_with_fallback(role: str, template: str, variables: dict):
+    """Try each configured provider in order; return (text, provider name) or (None, None)."""
+    for provider in providers:
+        try:
+            response = await provider.invoke(role, template, variables)
+            text = _response_text(response.content)
+            if text:
+                return text, provider.name
+        except Exception as error:
+            print(f"{provider.name} {role} failed; trying the next provider: {error}")
+    return None, None
 
 EXTRACT_PROMPT = """You extract explicit facts for a city small-business planning app.
 Update only values that the user stated. Never guess or infer a number, city, area, business,
@@ -168,17 +204,15 @@ async def process_chat_message(
     state_dict = current_state.model_dump()
     extracted_state = None
 
-    if extractor is not None:
+    extraction_text, _ = await invoke_with_fallback("extract", EXTRACT_PROMPT, {
+        "current_state": json.dumps(state_dict),
+        "user_message": user_message,
+    })
+    if extraction_text:
         try:
-            extract_chain = ChatPromptTemplate.from_template(EXTRACT_PROMPT) | extractor
-            await gemini_rate_limiter.wait_for_slot()
-            extraction_response = await extract_chain.ainvoke({
-                "current_state": json.dumps(state_dict),
-                "user_message": user_message,
-            })
-            extracted_state = _parse_extraction(_response_text(extraction_response.content))
-        except Exception as error:
-            print(f"AI extraction unavailable; using rule-based extraction: {error}")
+            extracted_state = _parse_extraction(extraction_text)
+        except (ValueError, json.JSONDecodeError) as error:
+            print(f"AI extraction was not valid JSON; using rule-based extraction: {error}")
 
     try:
         if extracted_state is None:
@@ -199,25 +233,17 @@ async def process_chat_message(
         if updated_state.user_profile and updated_state.user_profile.language
         else "English"
     )
-    response_text = ""
-    if speaker is not None:
-        try:
-            speak_chain = ChatPromptTemplate.from_template(SPEAK_PROMPT) | speaker
-            await gemini_rate_limiter.wait_for_slot()
-            response = await speak_chain.ainvoke({
-                "language": language,
-                "state_json": updated_state.model_dump_json(),
-                "user_message": user_message,
-                "target_topic": (
-                    f"Ask about the missing {next_field} profile detail."
-                    if next_field
-                    else "Ask which planning area the user wants to explore first."
-                ),
-                "chat_history": json.dumps(chat_history[-10:]),
-            })
-            response_text = _response_text(response.content)
-        except Exception as error:
-            print(f"AI response unavailable; using a localized onboarding question: {error}")
+    response_text, _ = await invoke_with_fallback("speak", SPEAK_PROMPT, {
+        "language": language,
+        "state_json": updated_state.model_dump_json(),
+        "user_message": user_message,
+        "target_topic": (
+            f"Ask about the missing {next_field} profile detail."
+            if next_field
+            else "Ask which planning area the user wants to explore first."
+        ),
+        "chat_history": json.dumps(chat_history[-10:]),
+    })
     if not response_text:
         response_text = localized_question(next_field, language, updated_state)
 

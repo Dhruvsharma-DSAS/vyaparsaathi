@@ -24,7 +24,7 @@ from app.core.city_planner import (
     weather_advice,
 )
 from app.core.city_guidance import licence_checklist, match_city_schemes
-from app.core.agent import process_chat_message, translate_chat_history
+from app.core.agent import process_chat_message, providers, translate_chat_history
 
 app = FastAPI(title="VyaparSaathi AI API")
 
@@ -43,8 +43,8 @@ app.add_middleware(
 
 @app.get("/health")
 async def health():
-    """Used by Render's health check."""
-    return {"status": "ok"}
+    """Used by Render's health check. Lists which AI providers have a key configured (never the keys)."""
+    return {"status": "ok", "ai_providers": [provider.name for provider in providers]}
 
 class FinanceRequest(BaseModel):
     total_project_cost: float
