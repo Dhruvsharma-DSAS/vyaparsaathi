@@ -1,6 +1,6 @@
-// Map database for VyaparSaathi City.
-// Local development uses SQLite (prisma/map.db). To host it, switch the provider
-// to "postgresql", set DATABASE_URL and swap the adapter in lib/db.ts.
+// Database for VyaparSaathi City (PostgreSQL).
+// Works with Prisma Postgres, Neon, Supabase, Render Postgres or a local Postgres.
+// Set DATABASE_URL (see .env.example), then run `npm run db:setup`.
 
 generator client {
   provider = "prisma-client"
@@ -8,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 /// A city the app supports, with the point the map opens on.

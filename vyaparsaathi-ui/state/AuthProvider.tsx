@@ -8,7 +8,11 @@ type AuthResponse = { user: AuthUser | null; plan: unknown; error?: string };
 
 type AuthContextValue = {
   user: AuthUser | null;
-  status: "loading" | "signed-out" | "signed-in";
+  status: "loading" | "signed-out" | "signed-in" | "guest";
+  /** Use the app without an account; the plan stays in this browser only. */
+  continueAsGuest: () => void;
+  /** Leave guest mode and show the sign-in screen (the local plan is kept and uploads after sign-in). */
+  showSignIn: () => void;
   signIn: (email: string, password: string) => Promise<string | null>;
   signUp: (name: string, email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
@@ -16,6 +20,19 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+const GUEST_KEY = "vyaparsaathi-guest";
+const readGuest = () => {
+  try { return window.localStorage.getItem(GUEST_KEY) === "1"; } catch { return false; }
+};
+const writeGuest = (on: boolean) => {
+  try {
+    if (on) window.localStorage.setItem(GUEST_KEY, "1");
+    else window.localStorage.removeItem(GUEST_KEY);
+  } catch {
+    // Storage blocked: guest mode lasts for this visit only.
+  }
+};
 
 const clearLocalPlan = () => {
   try {
@@ -47,9 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!active) return;
         if (data.user) restorePlan(data.plan);
         setUser(data.user);
-        setStatus(data.user ? "signed-in" : "signed-out");
+        setStatus(data.user ? "signed-in" : readGuest() ? "guest" : "signed-out");
       })
-      .catch(() => { if (active) setStatus("signed-out"); });
+      .catch(() => { if (active) setStatus(readGuest() ? "guest" : "signed-out"); });
     return () => { active = false; };
   }, []);
 
@@ -59,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = (await response.json()) as AuthResponse;
       if (!response.ok || !data.user) return data.error ?? "Something went wrong. Please try again.";
       if (data.plan) restorePlan(data.plan);
+      writeGuest(false);
       setUser(data.user);
       setStatus("signed-in");
       return null;
@@ -77,6 +95,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("signed-out");
   }, []);
 
+  const continueAsGuest = useCallback(() => {
+    writeGuest(true);
+    setStatus("guest");
+  }, []);
+
+  const showSignIn = useCallback(() => {
+    writeGuest(false);
+    setStatus("signed-out");
+  }, []);
+
   const savePlan = useCallback(async (snapshot: string) => {
     if (!user) return false;
     try {
@@ -87,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  return <AuthContext.Provider value={{ user, status, signIn, signUp, signOut, savePlan }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, status, signIn, signUp, signOut, savePlan, continueAsGuest, showSignIn }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

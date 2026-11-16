@@ -1,8 +1,9 @@
-fastapi
-uvicorn[standard]
-langchain-google-genai
-langchain-core
-python-dotenv
-pydantic
-requests
-deep-translator
+# Versions tested with Python 3.13 (see render.yaml).
+fastapi==0.163.1
+uvicorn[standard]==0.54.0
+langchain-google-genai==4.5.0
+langchain-core==1.8.1
+python-dotenv==1.2.4
+pydantic==2.14.3
+requests==2.34.2
+deep-translator==1.11.4

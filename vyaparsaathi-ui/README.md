@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-The UI uses `http://127.0.0.1:8000` by default. Set `NEXT_PUBLIC_API_BASE_URL` before starting Next.js to use another API URL.
+The UI uses `http://127.0.0.1:8000` by default. Set `NEXT_PUBLIC_API_BASE_URL` (see `.env.example`) to use another API URL.
 
 ## Data notes
 
@@ -34,7 +34,7 @@ Market and business-template figures are labelled samples, not live local counts
 
 ## Database (Prisma)
 
-Everything the app reads besides the Python API lives in one Prisma database (SQLite for local development, `prisma/map.db`, not committed).
+Everything the app reads besides the Python API lives in one PostgreSQL database managed by Prisma. Set `DATABASE_URL` in `.env` (see `.env.example`).
 
 | Data | Tables | Source file in `prisma/data/` |
 | --- | --- | --- |
@@ -50,7 +50,7 @@ Everything the app reads besides the Python API lives in one Prisma database (SQ
 | Market-area pins | `City`, `Area`, `SupplyMarket`, `MarketSample` | `lib/map/seed-data.ts` |
 | Accounts | `User`, `Session` | created by sign-up |
 
-Set it up once after `npm install` (about 10 seconds):
+Set it up once after `npm install` (about 10 seconds against a nearby database):
 
 ```bash
 npm run db:setup
@@ -58,11 +58,11 @@ npm run db:setup
 
 `npm run db:seed` reloads every dataset; it is safe to run again. `npm run db:studio` opens a table browser.
 
-API routes: `GET /api/map?city=Bengaluru` (areas, wards, density, stations, place categories), `GET /api/places?city=Pune&category=cafe`, `GET /api/data` (row counts). If the database is missing, `/api/map` falls back to the seed pins so the map still loads. To host it, switch the datasource to PostgreSQL, set `DATABASE_URL` and swap the adapter in `lib/db.ts`.
+API routes: `GET /api/map?city=Bengaluru` (areas, wards, density, stations, place categories), `GET /api/places?city=Pune&category=cafe`, `GET /api/data` (row counts). If the database is unreachable, `/api/map` falls back to the seed pins so the map still loads. Hosting steps for Vercel, Render and Prisma Postgres are in [DEPLOY.md](../DEPLOY.md).
 
 ## Accounts
 
-Users sign up with name, email and password (`/api/auth/register`, `/login`, `/logout`, `/me`). Passwords are stored as salted scrypt hashes; sessions are random tokens in an httpOnly cookie, with only their SHA-256 hash in the `Session` table. Each user's plan is saved to their account (`PUT /api/auth/plan`) and restored when they sign in on another device. Signing out clears the plan from that browser.
+Users can continue as a guest (plan kept in this browser only) or sign up with name, email and password (`/api/auth/register`, `/login`, `/logout`, `/me`). Passwords are stored as salted scrypt hashes; sessions are random tokens in an httpOnly cookie, with only their SHA-256 hash in the `Session` table. Each user's plan is saved to their account (`PUT /api/auth/plan`) and restored when they sign in on another device. Signing out clears the plan from that browser.
 
 ## Images and video
 

@@ -45,3 +45,6 @@ next-env.d.ts
 # prisma local database
 /prisma/*.db
 /prisma/*.db-journal
+
+# keep the example env file
+!.env.example

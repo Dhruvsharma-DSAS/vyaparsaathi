@@ -61,6 +61,10 @@ export type ExtraCopy = {
   signedInAs: string;
   database: string;
   videoCaption: string;
+  continueGuest: string;
+  guestTitle: string;
+  guestNote: string;
+  or: string;
 };
 
 export const extraCopy: Record<Language, ExtraCopy> = {
@@ -124,6 +128,10 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     signedInAs: "Signed in as",
     database: "Database",
     videoCaption: "From idea to first sale: market gaps, rush hours, costs and a 7-day pilot.",
+    continueGuest: "Continue as guest",
+    guestTitle: "You're using a guest session",
+    guestNote: "Your plan is saved only in this browser. Sign in or create an account to keep it safe on any device.",
+    or: "or",
   },
   Hindi: {
     tagline: "छोटे व्यवसाय की योजना के लिए आपकी बाज़ार बही",
@@ -185,6 +193,10 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     signedInAs: "साइन इन:",
     database: "डेटाबेस",
     videoCaption: "विचार से पहली बिक्री तक: बाज़ार गैप, भीड़ का समय, लागत और 7-दिन का पायलट।",
+    continueGuest: "अतिथि के रूप में जारी रखें",
+    guestTitle: "आप अतिथि के रूप में उपयोग कर रहे हैं",
+    guestNote: "आपकी योजना केवल इसी ब्राउज़र में सेव है। हर डिवाइस पर सुरक्षित रखने के लिए साइन इन करें या खाता बनाएं।",
+    or: "या",
   },
   Marathi: {
     tagline: "छोट्या व्यवसायाच्या नियोजनासाठी तुमची बाजार वही",
@@ -246,6 +258,10 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     signedInAs: "साइन इन:",
     database: "डेटाबेस",
     videoCaption: "कल्पनेपासून पहिल्या विक्रीपर्यंत: बाजारातील गॅप, गर्दीची वेळ, खर्च आणि 7-दिवसांचा पायलट.",
+    continueGuest: "पाहुणे म्हणून सुरू ठेवा",
+    guestTitle: "तुम्ही पाहुणे म्हणून वापरत आहात",
+    guestNote: "तुमची योजना फक्त या ब्राउझरमध्ये जतन आहे. प्रत्येक डिव्हाइसवर सुरक्षित ठेवण्यासाठी साइन इन करा किंवा खाते तयार करा.",
+    or: "किंवा",
   },
   Gujarati: {
     tagline: "નાના વ્યવસાયના આયોજન માટે તમારી બજાર ખાતાવહી",
@@ -307,6 +323,10 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     signedInAs: "સાઇન ઇન:",
     database: "ડેટાબેઝ",
     videoCaption: "વિચારથી પહેલા વેચાણ સુધી: બજારની ગૅપ, ભીડનો સમય, ખર્ચ અને 7-દિવસનો પાયલોટ.",
+    continueGuest: "મહેમાન તરીકે ચાલુ રાખો",
+    guestTitle: "તમે મહેમાન તરીકે ઉપયોગ કરી રહ્યા છો",
+    guestNote: "તમારી યોજના ફક્ત આ બ્રાઉઝરમાં સાચવેલી છે. દરેક ઉપકરણ પર સુરક્ષિત રાખવા સાઇન ઇન કરો અથવા ખાતું બનાવો.",
+    or: "અથવા",
   },
   Bengali: {
     tagline: "ছোট ব্যবসার পরিকল্পনার জন্য আপনার বাজারের খাতা",
@@ -368,5 +388,9 @@ export const extraCopy: Record<Language, ExtraCopy> = {
     signedInAs: "সাইন ইন:",
     database: "ডেটাবেস",
     videoCaption: "ধারণা থেকে প্রথম বিক্রি: বাজারের গ্যাপ, ভিড়ের সময়, খরচ ও ৭ দিনের পাইলট।",
+    continueGuest: "অতিথি হিসেবে চালিয়ে যান",
+    guestTitle: "আপনি অতিথি হিসেবে ব্যবহার করছেন",
+    guestNote: "আপনার পরিকল্পনা শুধু এই ব্রাউজারে সংরক্ষিত। যেকোনো ডিভাইসে নিরাপদ রাখতে সাইন ইন করুন বা অ্যাকাউন্ট তৈরি করুন।",
+    or: "অথবা",
   },
 };

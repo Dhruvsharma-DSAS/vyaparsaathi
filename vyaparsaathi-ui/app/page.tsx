@@ -76,10 +76,10 @@ function Splash() {
 function Gate() {
   const { status, user } = useAuth();
   if (status === "loading") return <Splash />;
-  if (!user) return <AuthScreen />;
+  if (status === "signed-out" || (!user && status !== "guest")) return <AuthScreen />;
   return (
-    // key: a different account always starts from its own saved plan
-    <AppProvider key={user.id}>
+    // key: a different account (or guest) always starts from its own saved plan
+    <AppProvider key={user?.id ?? "guest"}>
       <AppShell>
         <CurrentScreen />
       </AppShell>

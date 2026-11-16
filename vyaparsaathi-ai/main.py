@@ -1,4 +1,5 @@
 import asyncio
+import os
 import json
 import time
 from typing import Literal
@@ -27,13 +28,23 @@ from app.core.agent import process_chat_message, translate_chat_history
 
 app = FastAPI(title="VyaparSaathi AI API")
 
+# Comma-separated list of allowed frontend origins, e.g. "https://vyaparsaathi.vercel.app".
+# Defaults to "*" so local development keeps working; set CORS_ORIGINS on Render for production.
+cors_origins = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "*").split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=False,  # the UI calls this API without cookies
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/health")
+async def health():
+    """Used by Render's health check."""
+    return {"status": "ok"}
 
 class FinanceRequest(BaseModel):
     total_project_cost: float

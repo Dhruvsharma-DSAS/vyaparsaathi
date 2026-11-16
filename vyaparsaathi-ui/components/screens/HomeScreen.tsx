@@ -6,6 +6,7 @@ import { Card, Icon, Notice, ProgressBar, SelectField } from "@/components/ui";
 import { cities } from "@/lib/config";
 import type { City, Mode, Screen } from "@/lib/types";
 import { useApp } from "@/state/AppProvider";
+import { useAuth } from "@/state/AuthProvider";
 
 const modes: Array<{ mode: Mode; icon: string; primary: boolean }> = [
   { mode: "discover", icon: "lightbulb", primary: true },
@@ -20,6 +21,7 @@ const shortcuts: Array<{ screen: Screen; icon: string; label: "navMarket" | "nav
 export function HomeScreen() {
   const { copy, vyaparState, setCity, progress, setVyaparState, setMessages, navigate } = useApp();
   const { t, x } = copy;
+  const { status, showSignIn } = useAuth();
 
   const chooseMode = (mode: Mode) => {
     setVyaparState((previous) => ({ ...previous, business_context: { ...previous.business_context, mode } }));
@@ -117,6 +119,14 @@ export function HomeScreen() {
         <span className="flex items-center gap-2"><Icon name="workspace_premium" />{x.pitchTitle}</span>
         <Icon name="chevron_right" />
       </button>
+
+      {status === "guest" && (
+        <button type="button" onClick={showSignIn} className="mt-3 flex w-full items-center gap-3 rounded-xl bg-surface-2/70 px-4 py-3 text-left text-sm">
+          <Icon name="cloud_off" className="text-muted" />
+          <span className="flex-1"><span className="block font-semibold">{x.guestTitle}</span><span className="text-xs text-muted">{x.signIn} / {x.signUp}</span></span>
+          <Icon name="chevron_right" className="text-accent" />
+        </button>
+      )}
 
       <Notice className="mt-5">{t.sampleNotice}</Notice>
     </div>

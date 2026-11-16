@@ -21,7 +21,7 @@ function savedLanguage(): Language {
 
 /** Sign in / create account, in the same phone-width frame as the rest of the app. */
 export function AuthScreen() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, continueAsGuest } = useAuth();
   const [language, setLanguage] = useState<Language>(() => (typeof window === "undefined" ? "English" : savedLanguage()));
   const [mode, setMode] = useState<Mode>("signIn");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -132,6 +132,20 @@ export function AuthScreen() {
           {busy ? x.authWorking : x[mode]}
         </motion.button>
       </form>
+
+      <div className="mt-4 flex items-center gap-3 text-xs uppercase tracking-widest text-muted" aria-hidden="true">
+        <span className="h-px flex-1 bg-line" />{x.or}<span className="h-px flex-1 bg-line" />
+      </div>
+      <motion.button
+        type="button"
+        onClick={continueAsGuest}
+        whileTap={{ scale: 0.97 }}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-accent bg-surface px-4 py-3.5 font-bold text-accent transition hover:bg-accent-soft"
+      >
+        <Icon name="person" />
+        {x.continueGuest}
+      </motion.button>
+      <p className="mt-2 text-center text-xs text-muted">{x.guestNote}</p>
 
       <p className="mt-4 text-center text-sm text-muted">
         {mode === "signIn" ? x.newHere : x.haveAccount}{" "}

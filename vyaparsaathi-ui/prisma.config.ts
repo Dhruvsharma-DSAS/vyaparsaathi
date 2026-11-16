@@ -8,6 +8,8 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env.DATABASE_URL ?? "file:./prisma/map.db",
+    // Set in .env locally and in the Vercel project settings. Only `prisma migrate` and `db seed` need it;
+    // `prisma generate` (run on install) works without it.
+    url: process.env.DATABASE_URL ?? "",
   },
 });

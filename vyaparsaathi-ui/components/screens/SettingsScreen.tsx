@@ -12,7 +12,7 @@ type DataSummary = { tables: Array<{ label: string; rows: number }> };
 
 export function SettingsScreen() {
   const { copy, theme, setTheme, language, changeLanguage, resetAll, exportData, syncState } = useApp();
-  const { user, signOut } = useAuth();
+  const { user, signOut, status, showSignIn } = useAuth();
   const [summary, setSummary] = useState<DataSummary | null>(null);
 
   useEffect(() => {
@@ -41,6 +41,12 @@ export function SettingsScreen() {
     <div className="space-y-5">
       <PageHeader eyebrow="VyaparSaathi City" title={x.navSettings} sub={x.dataPrivacy} />
       <div className="space-y-4">
+        {status === "guest" && (
+          <Card className="border-accent/40 bg-accent-soft/40">
+            <CardTitle icon="person" title={x.guestTitle} sub={x.guestNote} />
+            <Button icon="login" onClick={showSignIn}>{x.signIn} / {x.signUp}</Button>
+          </Card>
+        )}
         {user && (
           <Card>
             <CardTitle icon="account_circle" title={user.name} sub={`${x.signedInAs} ${user.email}`}
