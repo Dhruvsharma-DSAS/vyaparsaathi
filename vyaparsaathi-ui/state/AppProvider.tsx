@@ -13,12 +13,14 @@ import {
   type ReactNode,
   type SetStateAction,
 } from "react";
-import { api } from "@/lib/api";
+import { api, isRateLimited, warmUpApi } from "@/lib/api";
+import { nowTime } from "@/lib/format";
 import { storageKey } from "@/lib/config";
 import { useAuth } from "@/state/AuthProvider";
 import { copy, getCopy, isLanguage, languageCodes, type AppCopy, type Language } from "@/lib/i18n";
 import type {
   ChatMessage,
+  ChatProvider,
   City,
   ExploreTab,
   FinanceResult,
@@ -54,6 +56,24 @@ export function createInitialState(language: Language): VyaparState {
   };
 }
 
+function mergeChatFields<T extends object>(sent: T, current: T, received: T): T {
+  const result = { ...current };
+  for (const key of Object.keys(sent) as (keyof T)[]) {
+    if (Object.is(current[key], sent[key]) && key in received) result[key] = received[key];
+  }
+  return result;
+}
+
+function mergeChatState(sent: VyaparState, current: VyaparState, received: VyaparState): VyaparState {
+  const profile = mergeChatFields(sent.user_profile, current.user_profile, received.user_profile);
+  const business = mergeChatFields(sent.business_context, current.business_context, received.business_context);
+  if (current.user_profile.city !== sent.user_profile.city) {
+    profile.district = current.user_profile.district;
+    business.candidate_zones = current.business_context.candidate_zones;
+  }
+  return { ...current, user_profile: profile, business_context: business };
+}
+
 const initialFinance: MoneyInputs = {
   businessId: "", sellingPrice: "", unitCost: "", startupCost: "", fixedCosts: "",
   availableCapital: "", dailyUnits: "", annualRate: "12", termMonths: "12",
@@ -68,7 +88,7 @@ const legacyScreens: Record<string, Screen> = { market: "explore", time: "explor
 
 /** Persisted slices; each gets a typed setter with the same name prefixed by "set". */
 type Persisted = {
-  messages: ChatMessage[];
+  chatProvider: ChatProvider;
   vyaparState: VyaparState;
   financeInputs: MoneyInputs;
   financeResult: FinanceResult | null;
@@ -106,6 +126,9 @@ type AppContextValue = Persisted & Setters & {
   progress: { filled: number; percent: number };
   resetAll: () => Promise<void>;
   newChat: () => void;
+  messages: ChatMessage[];
+  chatStartedAt: number | null;
+  sendChat: (text: string, failedIndex?: number) => void;
   syncState: "idle" | "saving" | "saved" | "error";
   exportData: () => string;
 };
@@ -114,7 +137,7 @@ export type LanguageStatus =
   | { phase: "idle" }
   | { phase: "translating"; language: Language }
   | { phase: "done"; language: Language }
-  | { phase: "failed"; language: Language; from: Language; source: ChatMessage[] };
+  | { phase: "failed"; language: Language };
 
 const AppContext = createContext<AppContextValue | null>(null);
 
@@ -135,7 +158,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [languageError, setLanguageError] = useState("");
   const [languageStatus, setLanguageStatus] = useState<LanguageStatus>({ phase: "idle" });
-  const [transcriptCache, setTranscriptCache] = useState<Partial<Record<Language, ChatMessage[]>>>({});
+  const [chatProvider, setChatProvider] = useState<ChatProvider>("auto");
+  const [chatStartedAt, setChatStartedAt] = useState<number | null>(null);
+  const pendingChat = useRef<Promise<ChatMessage[]> | null>(null);
+  const translating = useRef(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([{ role: "ai", text: copy.English.greeting, time: "" }]);
   const [vyaparState, setVyaparState] = useState<VyaparState>(() => createInitialState("English"));
@@ -167,6 +193,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const initial = createInitialState(lang);
       const profile = saved.vyaparState?.user_profile;
       setLanguage(lang);
+      if (saved.chatProvider === "gemini" || saved.chatProvider === "groq") setChatProvider(saved.chatProvider);
       setThemeState(saved.theme === "dark" ? "dark" : "light");
       setVyaparState({
         ...initial,
@@ -214,10 +241,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const snapshot = useMemo(() => ({
-    language, activeScreen: screen, exploreTab, theme, vyaparState, financeInputs, financeResult,
+    language, chatProvider, activeScreen: screen, exploreTab, theme, vyaparState, financeInputs, financeResult,
     supplierQuotes, completedLicences, groundInputs, priceChecks, footfallResult, rentBurdenResult,
     pilotInputs, pilotResult,
-  }), [language, screen, exploreTab, theme, vyaparState, financeInputs, financeResult, supplierQuotes,
+  }), [language, chatProvider, screen, exploreTab, theme, vyaparState, financeInputs, financeResult, supplierQuotes,
     completedLicences, groundInputs, priceChecks, footfallResult, rentBurdenResult, pilotInputs, pilotResult]);
 
   useEffect(() => {
@@ -228,6 +255,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // Storage can be full or blocked; the app keeps working in memory.
     }
   }, [hydrated, snapshot]);
+
+  useEffect(() => {
+    if (hydrated) void warmUpApi();
+  }, [hydrated]);
 
   // Also save the plan to the signed-in account, at most once every 1.5 s while the user is editing.
   const { savePlan } = useAuth();
@@ -274,60 +305,94 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (autoHideMs) statusTimer.current = window.setTimeout(() => setLanguageStatus({ phase: "idle" }), autoHideMs);
   }, []);
 
-  /** Translates the visible chat into `target`, reporting progress through languageStatus. */
-  const translateTranscript = useCallback(async (source: ChatMessage[], from: Language, target: Language) => {
-    // Swap the built-in greeting right away; the rest is translated by the API.
-    setMessages(source.map((message) =>
-      message.role === "ai" && message.text === copy[from].greeting ? { ...message, text: copy[target].greeting } : message));
-    const toTranslate = source.filter((message) => !(message.role === "ai" && message.text === copy[from].greeting));
-    if (toTranslate.length === 0) {
-      showStatus({ phase: "done", language: target }, 1800);
-      return;
-    }
+  const sendChat = useCallback((text: string, failedIndex?: number) => {
+    if (pendingChat.current || translating.current || !text.trim()) return;
+    const history = failedIndex === undefined ? messages : messages.slice(0, failedIndex - 1);
+    const withUser: ChatMessage[] = [...history, { role: "user", text, time: nowTime() }];
+    const cleanHistory = history.filter((item) => item.time && !item.failed).slice(-10)
+      .map(({ role, text, time }) => ({ role, text, time }));
+
+    setMessages(withUser);
+    setChatStartedAt(Date.now());
+    const request = api.chat(vyaparState, text, cleanHistory, chatProvider)
+      .then(({ updated_state, response_text }) => {
+        setVyaparState((current) => mergeChatState(vyaparState, current, updated_state));
+        const reply: ChatMessage = { role: "ai", text: response_text, time: nowTime(), language };
+        return [...withUser, reply];
+      })
+      .catch((error: unknown) => {
+        const rateLimited = isRateLimited(error);
+        const failed: ChatMessage = {
+          role: "ai", text: rateLimited ? copy[language].rateLimit : copy[language].connection,
+          time: nowTime(), failed: true, rateLimited,
+        };
+        return [...withUser, failed];
+      })
+      .then((transcript) => {
+        setMessages(transcript);
+        return transcript;
+      })
+      .finally(() => {
+        pendingChat.current = null;
+        setChatStartedAt(null);
+      });
+    pendingChat.current = request;
+  }, [chatProvider, language, messages, vyaparState]);
+
+  const translateTranscript = useCallback(async (target: Language) => {
+    if (translating.current) return;
+    translating.current = true;
     showStatus({ phase: "translating", language: target });
     try {
-      const { chat_history: translated } = await api.translateChat(source, target);
-      if (!Array.isArray(translated) || translated.length !== source.length ||
-        translated.some((message) => typeof message.text !== "string" || !message.text.trim())) {
-        throw new Error("Incomplete translation");
+      const source = await (pendingChat.current ?? messages);
+      const missing = source.flatMap((item, index) =>
+        !item.failed && item.time && item.language !== target && !item.translations?.[target] ? [index] : []);
+      const batches = [];
+      for (let start = 0; start < missing.length; start += 6) {
+        batches.push(missing.slice(start, start + 6));
       }
-      const merged = source.map((message, index) => ({ ...message, text: translated[index].text }));
-      setMessages(merged);
-      setTranscriptCache((cache) => ({ ...cache, [target]: merged }));
+      for (const indices of batches) {
+        const batch = indices.map((index) => {
+          const { role, text, time } = source[index];
+          return { role, text, time };
+        });
+        const { chat_history: result } = await api.translateChat(batch, target, chatProvider);
+        if (result.length !== batch.length || result.some((item) => !item.text?.trim())) {
+          throw new Error("Incomplete translation");
+        }
+        const translated = new Map(indices.map((index, offset) => [index, result[offset].text]));
+        setMessages((current) => current.map((item, index) => {
+          const text = translated.get(index);
+          return text ? { ...item, translations: { ...item.translations, [target]: text } } : item;
+        }));
+      }
       showStatus({ phase: "done", language: target }, 1800);
     } catch {
-      // Keep the new language; the user can retry translating the older messages.
-      showStatus({ phase: "failed", language: target, from, source });
+      showStatus({ phase: "failed", language: target });
+    } finally {
+      translating.current = false;
     }
-  }, [showStatus]);
+  }, [chatProvider, messages, showStatus]);
 
   const changeLanguage = useCallback(async (next: Language) => {
+    if (next === language || translating.current) return;
     setLanguageError("");
-    if (next === language || languageStatus.phase === "translating") return;
-    const previous = language;
     setLanguage(next);
     updateProfile({ language: next });
-    setTranscriptCache((cache) => ({ ...cache, [previous]: messages }));
-    const cached = transcriptCache[next];
-    if (cached) {
-      setMessages(cached);
-      showStatus({ phase: "done", language: next }, 1800);
-      return;
-    }
-    await translateTranscript(messages, previous, next);
-  }, [language, languageStatus.phase, messages, transcriptCache, updateProfile, showStatus, translateTranscript]);
+    await translateTranscript(next);
+  }, [language, updateProfile, translateTranscript]);
 
   const retryTranslation = useCallback(async () => {
-    if (languageStatus.phase !== "failed") return;
-    await translateTranscript(languageStatus.source, languageStatus.from, languageStatus.language);
+    if (languageStatus.phase === "failed") await translateTranscript(languageStatus.language);
   }, [languageStatus, translateTranscript]);
 
   const dismissLanguageStatus = useCallback(() => showStatus({ phase: "idle" }), [showStatus]);
 
   const newChat = useCallback(() => {
-    setTranscriptCache({});
+    if (pendingChat.current || translating.current) return;
     setMessages([{ role: "ai", text: copy[language].greeting, time: "" }]);
-  }, [language]);
+    showStatus({ phase: "idle" });
+  }, [language, showStatus]);
 
   const progress = useMemo(() => {
     const { user_profile: profile, business_context: business } = vyaparState;
@@ -356,7 +421,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     copy: getCopy(language), language, changeLanguage, languageError, languageStatus, retryTranslation, dismissLanguageStatus,
     screen, navigate, exploreTab, setExploreTab, theme, setTheme: setThemeState,
     isOnline, hydrated, setCity, updateProfile, progress, resetAll, exportData, syncState, newChat,
-    messages, setMessages, vyaparState, setVyaparState, financeInputs, setFinanceInputs,
+    messages, chatProvider, setChatProvider, chatStartedAt, sendChat, vyaparState, setVyaparState, financeInputs, setFinanceInputs,
     financeResult, setFinanceResult, supplierQuotes, setSupplierQuotes, completedLicences, setCompletedLicences,
     groundInputs, setGroundInputs, priceChecks, setPriceChecks, footfallResult, setFootfallResult,
     rentBurdenResult, setRentBurdenResult, pilotInputs, setPilotInputs, pilotResult, setPilotResult,

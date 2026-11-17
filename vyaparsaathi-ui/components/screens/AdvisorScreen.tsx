@@ -6,13 +6,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import { Icon, ProgressBar } from "@/components/ui";
-import { api, isRateLimited, warmUpApi } from "@/lib/api";
-import { nowTime } from "@/lib/format";
 import { speechLanguage } from "@/lib/i18n";
-import type { ChatMessage } from "@/lib/types";
+import type { ChatProvider } from "@/lib/types";
 import { useApp } from "@/state/AppProvider";
 
 const MAX_INPUT_HEIGHT = 140;
+const MODEL_LABEL = { English: "AI model", Hindi: "एआई मॉडल", Marathi: "एआय मॉडेल", Gujarati: "એઆઈ મોડેલ", Bengali: "এআই মডেল" };
+const AUTO_LABEL = { English: "Auto", Hindi: "स्वचालित", Marathi: "स्वयंचलित", Gujarati: "સ્વચાલિત", Bengali: "স্বয়ংক্রিয়" };
 
 /** Joins typed text and live voice text without touching the user's own spaces. */
 export function composeDraft(draft: string, transcript: string) {
@@ -22,12 +22,13 @@ export function composeDraft(draft: string, transcript: string) {
 }
 
 export function AdvisorScreen() {
-  const { copy, language, messages, setMessages, vyaparState, setVyaparState, progress, newChat, languageStatus } = useApp();
+  const { copy, language, messages, sendChat, chatStartedAt, chatProvider, setChatProvider, progress, newChat, languageStatus } = useApp();
   const translating = languageStatus.phase === "translating";
   const { t, x } = copy;
   const [draft, setDraft] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [slow, setSlow] = useState(false);
+  const loading = chatStartedAt !== null;
+  const [slowTurn, setSlowTurn] = useState<number | null>(null);
+  const slow = loading && slowTurn === chatStartedAt;
   const [voiceError, setVoiceError] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -38,9 +39,6 @@ export function AdvisorScreen() {
 
   const value = composeDraft(draft, transcript);
   const message = value.trim();
-
-  // Wake the API as soon as the chat opens so the first reply is quicker.
-  useEffect(() => { void warmUpApi(); }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -54,12 +52,12 @@ export function AdvisorScreen() {
     box.style.height = `${Math.min(box.scrollHeight, MAX_INPUT_HEIGHT)}px`;
   }, [value]);
 
-  // Show the "waking up" note when a reply takes longer than a few seconds.
   useEffect(() => {
-    if (!loading) return;
-    const timer = window.setTimeout(() => setSlow(true), 6000);
-    return () => { window.clearTimeout(timer); setSlow(false); };
-  }, [loading]);
+    if (chatStartedAt === null) return;
+    const remaining = Math.max(0, 6000 - (Date.now() - chatStartedAt));
+    const timer = window.setTimeout(() => setSlowTurn(chatStartedAt), remaining);
+    return () => window.clearTimeout(timer);
+  }, [chatStartedAt]);
 
   // Stop listening when the language changes so the next phrase uses the new locale.
   useEffect(() => {
@@ -67,38 +65,20 @@ export function AdvisorScreen() {
     void SpeechRecognition.stopListening().catch(() => undefined);
   }, [language, browserSupportsSpeechRecognition]);
 
-  const ask = async (text: string, history: ChatMessage[]) => {
-    const time = nowTime();
-    const withUser = [...history, { role: "user" as const, text, time }];
-    setMessages(withUser);
-    setLoading(true);
-    try {
-      const cleanHistory = history.filter((item) => !item.failed).map(({ role, text: body, time: at }) => ({ role, text: body, time: at }));
-      const response = await api.chat(vyaparState, text, cleanHistory);
-      setVyaparState(response.updated_state);
-      setMessages([...withUser, { role: "ai", text: response.response_text, time: nowTime() }]);
-    } catch (error) {
-      setMessages([...withUser, { role: "ai", text: isRateLimited(error) ? t.rateLimit : t.connection, time: nowTime(), failed: true }]);
-    } finally {
-      setLoading(false);
-      inputRef.current?.focus();
-    }
-  };
-
   const send = async () => {
-    if (!message || loading || translating) return;
+    if (!message || message.length > 3000 || loading || translating) return;
     if (listening) await SpeechRecognition.stopListening().catch(() => setVoiceError(t.voicePermission));
     resetTranscript();
     setDraft("");
     setVoiceError("");
-    await ask(message, messages);
+    sendChat(message);
   };
 
   /** Re-sends the user message that produced a failed reply. */
-  const retry = async (failedIndex: number) => {
+  const retry = (failedIndex: number) => {
     const question = messages[failedIndex - 1];
-    if (loading || !question || question.role !== "user") return;
-    await ask(question.text, messages.slice(0, failedIndex - 1));
+    if (loading || translating || !question || question.role !== "user") return;
+    sendChat(question.text, failedIndex);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -141,10 +121,22 @@ export function AdvisorScreen() {
           </div>
           <div className="mt-1.5"><ProgressBar percent={progress.percent} label={t.profile} /></div>
         </div>
+        <select
+          aria-label={MODEL_LABEL[language]}
+          title={MODEL_LABEL[language]}
+          value={chatProvider}
+          onChange={(event) => setChatProvider(event.target.value as ChatProvider)}
+          disabled={loading || translating}
+          className="h-10 max-w-[7rem] shrink-0 rounded-xl border border-line bg-surface px-2 text-xs font-semibold text-accent disabled:opacity-50"
+        >
+          <option value="auto">{AUTO_LABEL[language]}</option>
+          <option value="gemini">Gemini</option>
+          <option value="groq">Groq</option>
+        </select>
         <button
           type="button"
           onClick={() => { newChat(); setDraft(""); resetTranscript(); inputRef.current?.focus(); }}
-          disabled={loading || messages.length <= 1}
+          disabled={loading || translating || messages.length <= 1}
           aria-label={x.newChat}
           title={x.newChat}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line text-accent transition hover:bg-accent-soft disabled:opacity-40"
@@ -172,12 +164,14 @@ export function AdvisorScreen() {
               translating && item.text !== copy.t.greeting && "translating-bubble",
             )} aria-busy={translating || undefined}>
               {item.failed && <Icon name="cloud_off" className="mr-1.5 align-[-3px] text-[18px]" />}
-              {item.text}
+              {item.failed ? (item.rateLimited ? t.rateLimit : t.connection)
+                : !item.time && item.role === "ai" ? t.greeting
+                  : item.translations?.[language] ?? item.text}
             </div>
             <div className="mt-1 flex items-center gap-3 px-2">
               {item.time && <span className="text-[10px] text-muted">{item.time}</span>}
               {item.failed && index === lastFailedIndex && (
-                <button type="button" onClick={() => void retry(index)} disabled={loading} className="flex items-center gap-1 text-xs font-semibold text-accent disabled:opacity-50">
+                <button type="button" onClick={() => retry(index)} disabled={loading || translating} className="flex items-center gap-1 text-xs font-semibold text-accent disabled:opacity-50">
                   <Icon name="refresh" className="text-[16px]" />{x.retry}
                 </button>
               )}
@@ -205,6 +199,7 @@ export function AdvisorScreen() {
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}
+            maxLength={3000}
             rows={1}
             className="max-h-[140px] min-h-11 min-w-0 flex-1 resize-none bg-transparent px-3 py-2.5 text-[15px] leading-6 text-ink outline-none placeholder:text-muted"
             placeholder={listening ? t.voiceListening : t.type}
@@ -227,7 +222,7 @@ export function AdvisorScreen() {
             type="button"
             whileTap={{ scale: 0.92 }}
             onClick={() => void send()}
-            disabled={loading || translating || !message}
+            disabled={loading || translating || !message || message.length > 3000}
             aria-label="Send message"
             className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-accent-ink shadow-md transition disabled:opacity-40 disabled:shadow-none"
           ><Icon name="arrow_upward" /></motion.button>

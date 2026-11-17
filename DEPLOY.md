@@ -32,11 +32,13 @@ Using Neon, Supabase or Render Postgres instead works the same way: only the `DA
 1. In Render: **New > Blueprint**, connect this GitHub repository. Render reads `render.yaml` and creates the `vyaparsaathi-api` web service.
 2. When asked, fill in:
    - `GOOGLE_API_KEY`: a Google AI Studio key for the Saathi chat (<https://aistudio.google.com> > Get API key).
-   - `GROQ_API_KEY`: a Groq key (<https://console.groq.com/keys>). Used when Gemini is missing or rate-limited. Set `LLM_PROVIDER=groq` to try Groq first.
+   - `GROQ_API_KEY`: a Groq key (<https://console.groq.com/keys>). Set both keys to enable explicit model selection in Saathi. Auto can fall back to the other provider. Set `LLM_PROVIDER=groq` to make Auto try Groq first.
    - `CORS_ORIGINS`: your Vercel URL, e.g. `https://vyaparsaathi.vercel.app` (you can put `*` first and change it after step 3).
 3. Wait for the deploy, then open `https://<your-service>.onrender.com/health`. It should show `{"status":"ok","ai_providers":["gemini","groq"]}` (only the providers whose keys you set). Copy the service URL.
 
-Free Render services sleep after 15 minutes without traffic; the first request after that takes about a minute.
+Saathi uses Gemini 3.5 Flash-Lite and Groq GPT-OSS 20B by default. Set `GEMINI_MODEL` or `GROQ_MODEL` on Render to override the defaults. Replies and chat translation use the selected provider. The Next.js proxy reads Pune and Bengaluru market context from the existing Prisma database.
+
+Free Render services sleep after 15 minutes without traffic, so the first request after an idle period can still take about a minute.
 
 ## 3. Web app (Vercel)
 

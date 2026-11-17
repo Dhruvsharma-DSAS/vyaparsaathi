@@ -2,6 +2,7 @@ import axios from "axios";
 import type {
   BusinessTemplate,
   ChatMessage,
+  ChatProvider,
   ChatResponse,
   City,
   FinanceResult,
@@ -30,10 +31,10 @@ const post = <T>(path: string, body: unknown) => http.post<T>(path, body).then((
 
 /** Every backend route in one typed map, so screens never build URLs themselves. */
 export const api = {
-  chat: (state: VyaparState, message: string, chat_history: ChatMessage[]) =>
-    post<ChatResponse>("/api/chat-loop", { state, message, chat_history }),
-  translateChat: (chat_history: ChatMessage[], language: string) =>
-    post<{ chat_history: ChatMessage[] }>("/api/translate-chat", { chat_history, language }),
+  chat: (state: VyaparState, message: string, chat_history: ChatMessage[], provider: ChatProvider) =>
+    post<ChatResponse>("/api/chat-loop", { state, message, chat_history, provider }),
+  translateChat: (chat_history: ChatMessage[], language: string, provider: ChatProvider) =>
+    post<{ chat_history: ChatMessage[] }>("/api/translate-chat", { chat_history, language, provider }),
   businessTemplates: () => get<{ business_templates: BusinessTemplate[] }>("/api/city/business-templates"),
   marketData: (city: City) => get<unknown>("/api/city/market-data", { city }),
   rushClock: (hourly_rush_index: Record<string, number>, working_hours: string) =>

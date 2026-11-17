@@ -24,7 +24,10 @@ from app.core.city_planner import (
     weather_advice,
 )
 from app.core.city_guidance import licence_checklist, match_city_schemes
-from app.core.agent import process_chat_message, providers, translate_chat_history
+from app.core.agent import (
+    ChatLanguage, ProviderChoice, ProviderUnavailable,
+    process_chat_message, providers, translate_chat_history,
+)
 
 app = FastAPI(title="VyaparSaathi AI API")
 
@@ -120,39 +123,51 @@ class IngredientCostRequest(BaseModel):
 class UnitCostRequest(BaseModel):
     ingredients: list[IngredientCostRequest]
 
-# Inside main.py
+class TranscriptMessage(BaseModel):
+    role: Literal["user", "ai"]
+    text: str = Field(min_length=1, max_length=6000)
+    time: str = ""
+
+
 class ChatRequest(BaseModel):
     state: VyaparState
-    message: str
-    chat_history: list = []  # Ensures the AI has memory
+    message: str = Field(min_length=1, max_length=3000)
+    chat_history: list[TranscriptMessage] = Field(default_factory=list)
+    provider: ProviderChoice = "auto"
+    city_context: dict | None = None
+
 
 class TranslateChatRequest(BaseModel):
-    chat_history: list
-    language: str
+    chat_history: list[TranscriptMessage] = Field(max_length=120)
+    language: ChatLanguage
+    provider: ProviderChoice = "auto"
+
+
+def provider_http_error(error: ProviderUnavailable) -> HTTPException:
+    detail = "AI rate limit reached." if error.status == 429 else "The selected AI service is unavailable."
+    return HTTPException(status_code=error.status, detail=detail)
+
 
 @app.post("/api/chat-loop")
 async def chat_loop_endpoint(req: ChatRequest):
-    # Passes the state, the new message, and the history to the agent
     try:
-        result = await process_chat_message(req.state, req.message, req.chat_history)
-    except RuntimeError as error:
-        if "Gemini" in str(error):
-            raise HTTPException(status_code=429, detail="Gemini rate limit reached. Please try again shortly.") from error
-        raise
-    except Exception as error:
-        error_text = str(error).lower()
-        if "429" in error_text or "resource_exhausted" in error_text or "rate limit" in error_text:
-            raise HTTPException(status_code=429, detail="Gemini rate limit reached. Please try again shortly.") from error
-        raise
-    return result
+        return await process_chat_message(
+            req.state, req.message, [item.model_dump() for item in req.chat_history[-10:]], req.provider, req.city_context,
+        )
+    except ProviderUnavailable as error:
+        raise provider_http_error(error) from error
+
 
 @app.post("/api/translate-chat")
 async def translate_chat_endpoint(req: TranslateChatRequest):
     try:
-        translated_history = await translate_chat_history(req.chat_history, req.language)
-    except Exception as error:
-        raise HTTPException(status_code=503, detail="Unable to translate the conversation right now.") from error
-    return {"chat_history": translated_history}
+        translated = await translate_chat_history(
+            [item.model_dump() for item in req.chat_history], req.language, req.provider,
+        )
+    except ProviderUnavailable as error:
+        raise provider_http_error(error) from error
+    return {"chat_history": translated}
+
 
 @app.post("/api/evaluate-finance")
 async def evaluate_finance(req: FinanceRequest):

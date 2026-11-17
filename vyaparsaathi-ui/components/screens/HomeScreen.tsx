@@ -47,14 +47,14 @@ function ProgressRing({ percent }: { percent: number }) {
 }
 
 export function HomeScreen() {
-  const { copy, vyaparState, setCity, progress, setVyaparState, setMessages, navigate } = useApp();
+  const { copy, vyaparState, setCity, progress, setVyaparState, newChat, navigate } = useApp();
   const { t, x } = copy;
   const { status, showSignIn } = useAuth();
   const city = vyaparState.user_profile.city;
 
   const chooseMode = (mode: Mode) => {
     setVyaparState((previous) => ({ ...previous, business_context: { ...previous.business_context, mode } }));
-    setMessages([{ role: "ai", text: t.greeting, time: "" }]);
+    newChat();
     navigate("advisor");
   };
 

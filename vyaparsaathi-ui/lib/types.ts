@@ -8,10 +8,15 @@ export type Theme = "light" | "dark";
 export type Screen = "home" | "advisor" | "explore" | "money" | "plan" | "pitch" | "settings";
 export type ExploreTab = "market" | "time";
 
+export type ChatProvider = "auto" | "gemini" | "groq";
+
 export type ChatMessage = {
   role: "ai" | "user";
   text: string;
   time: string;
+  language?: Language;
+  translations?: Partial<Record<Language, string>>;
+  rateLimited?: boolean;
   /** Set on an AI bubble that reports a failed request; it is not sent back to the API as history. */
   failed?: boolean;
 };
@@ -171,6 +176,7 @@ export type PilotResult = {
 export type ChatResponse = {
   updated_state: VyaparState;
   response_text: string;
+  provider?: Exclude<ChatProvider, "auto"> | null;
 };
 
 export type MarketSample = {

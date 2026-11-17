@@ -1,4 +1,6 @@
+import { clearTimeout, setTimeout } from "node:timers";
 import { NextResponse, type NextRequest } from "next/server";
+import { getAdvisorCityContext } from "@/lib/map/advisor-context";
 import { isAllowedPath } from "@/lib/proxy-path";
 
 /**
@@ -21,6 +23,29 @@ function upstreamBase() {
   return base.replace(/\/+$/, "");
 }
 
+async function chatBody(raw: string) {
+  let input;
+  try {
+    input = JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+  if (!input || typeof input !== "object" || Array.isArray(input)) return raw;
+  let cancelTimeout: (() => void) | undefined;
+  try {
+    const context = await Promise.race([
+      getAdvisorCityContext(input).catch(() => undefined),
+      new Promise<undefined>((resolve) => {
+        const timer = setTimeout(() => resolve(undefined), 2000);
+        cancelTimeout = () => clearTimeout(timer);
+      }),
+    ]);
+    return JSON.stringify({ ...input, city_context: context ?? { unavailable: true } });
+  } finally {
+    cancelTimeout?.();
+  }
+}
+
 async function forward(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
   if (!isAllowedPath(path)) return NextResponse.json({ detail: "Not found" }, { status: 404 });
@@ -28,13 +53,17 @@ async function forward(request: NextRequest, { params }: { params: Promise<{ pat
   const target = `${upstreamBase()}/${path.map(encodeURIComponent).join("/")}${request.nextUrl.search}`;
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
   try {
+    const raw = hasBody ? await request.text() : undefined;
+    const body = raw !== undefined && request.method === "POST" && path.join("/") === "api/chat-loop"
+      ? await chatBody(raw)
+      : raw;
     const upstream = await fetch(target, {
       method: request.method,
       headers: {
         accept: request.headers.get("accept") ?? "application/json",
         ...(hasBody ? { "content-type": request.headers.get("content-type") ?? "application/json" } : {}),
       },
-      body: hasBody ? await request.text() : undefined,
+      body,
       cache: "no-store",
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });

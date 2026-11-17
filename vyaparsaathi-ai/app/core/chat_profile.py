@@ -101,7 +101,7 @@ def rule_based_extraction(state: VyaparState, user_message: str) -> VyaparState:
 
     for name, keywords in (
         ("Momo cart", ("momo", "momos")),
-        ("Chai and snacks cart", ("chai", "tea cart")),
+        ("Chai and snacks cart", ("chai", "tea cart", "चाय", "चहा", "ચા", "চা")),
         ("Vada pav cart", ("vada pav", "vadapav")),
         ("Fresh juice cart", ("juice cart", "fresh juice")),
         ("Home tiffin service", ("tiffin", "dabba")),
@@ -109,7 +109,9 @@ def rule_based_extraction(state: VyaparState, user_message: str) -> VyaparState:
         ("Phone repair shop", ("phone repair", "mobile repair")),
         ("Home pickles and papad", ("pickles", "papad")),
     ):
-        if any(keyword in message for keyword in keywords):
+        if (name == "Chai and snacks cart" and message.strip() == "tea") or any(
+            keyword in message for keyword in keywords
+        ):
             business["business_name"] = name
             break
 
